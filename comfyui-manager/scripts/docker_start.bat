@@ -21,7 +21,7 @@ docker compose -f docker-compose-comfyui.yml up -d
 
 REM Start Portal
 echo [3/3] Starting Portal container...
-docker compose -f docker-compose-portal.yml up -d --build
+docker compose -f docker-compose-portal.yml up -d --build --remove-orphans
 
 echo.
 echo ===========================================
