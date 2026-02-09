@@ -1,0 +1,658 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ComfyUI Cloud Studio{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Welcome back, <span class="gradient-text">{{ user.email.split('@')[0] }}</span></h1>
+            <p class="text-sm opacity-60 mt-1">Manage your ComfyUI workspace and monitor your creative projects.</p>
+        </div>
+        <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm gap-2" onclick="refreshComfyuiStatus()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+            </button>
+            <div class="dropdown dropdown-end">
+                <button tabindex="0" class="btn btn-primary btn-sm gap-2 shadow-lg shadow-primary/25">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Quick Actions
+                </button>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-2xl bg-base-100 rounded-xl w-52 border border-base-content/10 mt-2">
+                    <li><a onclick="createJob('IMAGE_TASK')" class="gap-2"><span>🖼️</span> New Image Task</a></li>
+                    <li><a onclick="createJob('VIDEO_TASK')" class="gap-2"><span>🎬</span> New Video Task</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#" class="gap-2"><span>📁</span> Browse Outputs</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Overview -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <!-- Balance Card -->
+    <div class="glass-card rounded-2xl p-5 hover:border-primary/30 transition-all duration-300 group">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wider opacity-50 mb-1">Available Credits</p>
+                <p class="text-3xl font-bold gradient-text">{{ balance }}</p>
+                <p class="text-xs opacity-50 mt-1">RCC Balance</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+        </div>
+        <button class="btn btn-ghost btn-xs mt-3 gap-1 text-primary hover:bg-primary/10" onclick="buyPack('starter_pack')">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Top Up
+        </button>
+    </div>
+    
+    <!-- Jobs Card -->
+    <div class="glass-card rounded-2xl p-5 hover:border-success/30 transition-all duration-300 group">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wider opacity-50 mb-1">Total Jobs</p>
+                <p class="text-3xl font-bold text-success">{{ jobs|length }}</p>
+                <p class="text-xs opacity-50 mt-1">All time</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Sessions -->
+    <div class="glass-card rounded-2xl p-5 hover:border-info/30 transition-all duration-300 group">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wider opacity-50 mb-1">Active Sessions</p>
+                <p class="text-3xl font-bold text-info">1</p>
+                <p class="text-xs opacity-50 mt-1">Running</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Usage Card -->
+    <div class="glass-card rounded-2xl p-5 hover:border-warning/30 transition-all duration-300 group">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wider opacity-50 mb-1">GPU Usage</p>
+                <p class="text-3xl font-bold text-warning">--</p>
+                <p class="text-xs opacity-50 mt-1">This month</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Main Content Area -->
+    <div class="xl:col-span-2 space-y-6">
+        
+        <!-- ComfyUI Service Control -->
+        <div class="glass-card rounded-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-base-content/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold">ComfyUI Workspace</h2>
+                        <p class="text-xs opacity-50">Your personal AI generation environment</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="status-badge" class="flex items-center gap-2 px-4 py-2 rounded-full bg-base-200/50 border border-base-content/10">
+                        <span id="comfyui-status-dot" class="status-dot status-unknown"></span>
+                        <span id="comfyui-status-text" class="text-sm font-medium">Checking...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6">
+                <!-- Status Messages -->
+                <div id="comfyui-message" class="alert shadow-lg mb-4 hidden border-0"></div>
+                
+                <!-- Ready State -->
+                <div id="comfyui-url" class="hidden mb-6">
+                    <div class="bg-gradient-to-r from-success/10 to-emerald-500/10 border border-success/20 rounded-xl p-5">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center ring-4 ring-success/10">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-success text-lg">Workspace Ready</h3>
+                                <p class="text-sm opacity-70">Your ComfyUI instance is running and ready to use.</p>
+                            </div>
+                            <a id="comfyui-link" href="#" target="_blank" class="btn btn-success gap-2 shadow-lg shadow-success/25 no-animation">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                Open Studio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Control Buttons -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <button class="btn btn-success gap-2 min-w-[120px] shadow-lg shadow-success/20 hover:shadow-success/40 transition-shadow" id="btn-start" onclick="comfyuiAction('start')" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                        </svg>
+                        Start
+                    </button>
+                    <button class="btn btn-error btn-outline gap-2 min-w-[120px] hover:shadow-lg hover:shadow-error/20 transition-shadow" id="btn-stop" onclick="comfyuiAction('stop')" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />
+                        </svg>
+                        Stop
+                    </button>
+                    <button class="btn btn-ghost gap-2" id="btn-restart" onclick="comfyuiAction('restart')" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Restart
+                    </button>
+                    
+                    <div class="flex-grow"></div>
+                    
+                    <button class="btn btn-ghost btn-sm gap-2 opacity-60 hover:opacity-100" id="btn-logs" onclick="toggleLogs()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        View Logs
+                    </button>
+                </div>
+                
+                <!-- Logs Viewer -->
+                <div id="comfyui-logs-container" class="mt-6 hidden">
+                    <div class="rounded-xl overflow-hidden border border-base-content/10">
+                        <div class="flex items-center justify-between px-4 py-3 bg-[#0d1117] border-b border-gray-800">
+                            <div class="flex items-center gap-3">
+                                <div class="flex gap-1.5">
+                                    <div class="w-3 h-3 rounded-full bg-[#ff5f57]"></div>
+                                    <div class="w-3 h-3 rounded-full bg-[#febc2e]"></div>
+                                    <div class="w-3 h-3 rounded-full bg-[#28c840]"></div>
+                                </div>
+                                <span class="text-xs text-gray-500 font-mono">container logs</span>
+                            </div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <span class="text-xs text-gray-500">Auto-scroll</span>
+                                <input type="checkbox" class="toggle toggle-xs toggle-success" id="logs-autoscroll" checked />
+                            </label>
+                        </div>
+                        <div class="bg-[#0d1117] p-4 max-h-[400px] overflow-y-auto">
+                            <pre id="comfyui-logs" class="text-xs font-mono text-gray-300 leading-relaxed whitespace-pre-wrap"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="glass-card rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-base-content/5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">Recent Activity</h3>
+                        <p class="text-xs opacity-50">Your latest generation jobs</p>
+                    </div>
+                </div>
+                <a href="#" class="btn btn-ghost btn-sm gap-1 text-xs">
+                    View All
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+            <div class="p-6">
+                {% if jobs %}
+                <div class="space-y-3">
+                    {% for job in jobs[:5] %}
+                    <div class="flex items-center gap-4 p-3 rounded-xl bg-base-200/30 hover:bg-base-200/50 transition-colors group">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl {{ 'bg-primary/10' if job.type == 'IMAGE_TASK' else 'bg-secondary/10' }}">
+                            {% if job.type == 'IMAGE_TASK' %}🖼️{% else %}🎬{% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm truncate">{{ job.type|replace('_', ' ')|title }}</p>
+                            <p class="text-xs opacity-50">Job #{{ job.id }}</p>
+                        </div>
+                        <div class="badge badge-sm {{ 'badge-success' if job.status == 'completed' else 'badge-warning' if job.status == 'running' else 'badge-ghost' }} gap-1">
+                            {% if job.status == 'completed' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            {% elif job.status == 'running' %}
+                            <span class="loading loading-spinner loading-xs"></span>
+                            {% endif %}
+                            {{ job.status }}
+                        </div>
+                        <span class="text-xs opacity-50 hidden sm:block">{{ job.cost_rcc }} RCC</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="w-16 h-16 rounded-2xl bg-base-200/50 flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold opacity-70">No activity yet</h4>
+                    <p class="text-sm opacity-50 mt-1">Start your ComfyUI workspace and create your first generation job.</p>
+                    <button class="btn btn-primary btn-sm mt-4 gap-2" onclick="comfyuiAction('start')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Get Started
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Quick Launch -->
+        <div class="glass-card rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-base-content/5">
+                <h3 class="font-bold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Quick Launch
+                </h3>
+            </div>
+            <div class="p-4 space-y-3">
+                <button class="w-full btn btn-ghost justify-start gap-4 h-auto py-4 hover:bg-primary/10 group border border-base-content/5 hover:border-primary/30 transition-all" onclick="createJob('IMAGE_TASK')">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                        🖼️
+                    </div>
+                    <div class="flex-1 text-left">
+                        <p class="font-semibold">Image Generation</p>
+                        <p class="text-xs opacity-50">Create stunning AI images</p>
+                    </div>
+                    <div class="badge badge-primary badge-outline badge-sm">1 RCC</div>
+                </button>
+                
+                <button class="w-full btn btn-ghost justify-start gap-4 h-auto py-4 hover:bg-secondary/10 group border border-base-content/5 hover:border-secondary/30 transition-all" onclick="createJob('VIDEO_TASK')">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                        🎬
+                    </div>
+                    <div class="flex-1 text-left">
+                        <p class="font-semibold">Video Generation</p>
+                        <p class="text-xs opacity-50">Animate your creations</p>
+                    </div>
+                    <div class="badge badge-secondary badge-outline badge-sm">5 RCC</div>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Top Up Credits -->
+        <div class="glass-card rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-base-content/5">
+                <h3 class="font-bold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Top Up Credits
+                </h3>
+            </div>
+            <div class="p-4 space-y-3">
+                <button class="w-full btn btn-outline btn-sm justify-between h-auto py-3" onclick="buyPack('starter_pack')">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">💎</span>
+                        <span>Starter Pack</span>
+                    </div>
+                    <span class="font-bold">10 RCC</span>
+                </button>
+                <button class="w-full btn btn-outline btn-primary btn-sm justify-between h-auto py-3" onclick="buyPack('pro_pack')">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🚀</span>
+                        <span>Pro Pack</span>
+                    </div>
+                    <span class="font-bold">50 RCC</span>
+                </button>
+                <button class="w-full btn btn-outline btn-secondary btn-sm justify-between h-auto py-3" onclick="buyPack('studio_pack')">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">⚡</span>
+                        <span>Studio Pack</span>
+                    </div>
+                    <span class="font-bold">200 RCC</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Resources -->
+        <div class="glass-card rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-base-content/5">
+                <h3 class="font-bold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    Resources
+                </h3>
+            </div>
+            <div class="p-4">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-base-200/50 transition-colors group">
+                            <span class="text-lg">📚</span>
+                            <span class="text-sm group-hover:text-primary transition-colors">Documentation</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-base-200/50 transition-colors group">
+                            <span class="text-lg">🎓</span>
+                            <span class="text-sm group-hover:text-primary transition-colors">Tutorials</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-base-200/50 transition-colors group">
+                            <span class="text-lg">💬</span>
+                            <span class="text-sm group-hover:text-primary transition-colors">Community</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-base-200/50 transition-colors group">
+                            <span class="text-lg">🆘</span>
+                            <span class="text-sm group-hover:text-primary transition-colors">Support</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ComfyUI Service Control
+let comfyuiRefreshInterval = null;
+
+async function refreshComfyuiStatus() {
+    try {
+        const response = await fetch('/comfyui/status');
+        if (!response.ok) throw new Error('Failed to get status');
+        const data = await response.json();
+        updateComfyuiUI(data);
+    } catch (err) {
+        updateComfyuiUI({ status: 'error', message: 'Unable to check status: ' + err.message });
+    }
+}
+
+function updateComfyuiUI(data) {
+    const statusDot = document.getElementById('comfyui-status-dot');
+    const statusText = document.getElementById('comfyui-status-text');
+    const urlDiv = document.getElementById('comfyui-url');
+    const urlLink = document.getElementById('comfyui-link');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const btnRestart = document.getElementById('btn-restart');
+    const statusBadge = document.getElementById('status-badge');
+    
+    statusDot.className = 'status-dot';
+    statusBadge.className = 'flex items-center gap-2 px-4 py-2 rounded-full border';
+    
+    switch (data.status) {
+        case 'running':
+            statusDot.classList.add('status-running');
+            statusText.textContent = 'Running';
+            statusText.className = 'text-sm font-medium text-success';
+            statusBadge.classList.add('bg-success/10', 'border-success/20');
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            btnRestart.disabled = false;
+            if (data.url) {
+                urlDiv.classList.remove('hidden');
+                urlLink.href = data.url;
+            }
+            break;
+        case 'stopped':
+        case 'not_found':
+            statusDot.classList.add('status-stopped');
+            statusText.textContent = 'Stopped';
+            statusText.className = 'text-sm font-medium opacity-50';
+            statusBadge.classList.add('bg-base-200/50', 'border-base-content/10');
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            btnRestart.disabled = true;
+            urlDiv.classList.add('hidden');
+            break;
+        case 'starting':
+            statusDot.classList.add('status-starting');
+            statusText.textContent = 'Starting...';
+            statusText.className = 'text-sm font-medium text-warning';
+            statusBadge.classList.add('bg-warning/10', 'border-warning/20');
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            btnRestart.disabled = true;
+            urlDiv.classList.add('hidden');
+            break;
+        case 'stopping':
+            statusDot.classList.add('status-stopping');
+            statusText.textContent = 'Stopping...';
+            statusText.className = 'text-sm font-medium text-error';
+            statusBadge.classList.add('bg-error/10', 'border-error/20');
+            btnStart.disabled = true;
+            btnStop.disabled = true;
+            btnRestart.disabled = true;
+            urlDiv.classList.add('hidden');
+            break;
+        default:
+            statusDot.classList.add('status-error');
+            statusText.textContent = data.message || 'Error';
+            statusText.className = 'text-sm font-medium text-error';
+            statusBadge.classList.add('bg-error/10', 'border-error/20');
+            btnStart.disabled = false;
+            btnStop.disabled = false;
+            btnRestart.disabled = false;
+            urlDiv.classList.add('hidden');
+    }
+}
+
+async function comfyuiAction(action) {
+    const messageDiv = document.getElementById('comfyui-message');
+    
+    try {
+        document.getElementById('btn-start').disabled = true;
+        document.getElementById('btn-stop').disabled = true;
+        document.getElementById('btn-restart').disabled = true;
+        
+        messageDiv.classList.remove('hidden');
+        messageDiv.className = 'alert bg-info/10 border border-info/20 text-info mb-4';
+        messageDiv.innerHTML = `<span class="loading loading-spinner loading-sm"></span> ${action.charAt(0).toUpperCase() + action.slice(1)}ing workspace...`;
+        
+        const response = await fetch(`/comfyui/${action}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            messageDiv.className = 'alert bg-success/10 border border-success/20 text-success mb-4';
+            messageDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> ${data.message}`;
+            if (action === 'start' || action === 'restart') startStatusPolling();
+        } else {
+            messageDiv.className = 'alert bg-error/10 border border-error/20 text-error mb-4';
+            messageDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> ${data.message || 'Action failed'}`;
+        }
+        
+        await refreshComfyuiStatus();
+    } catch (err) {
+        messageDiv.classList.remove('hidden');
+        messageDiv.className = 'alert bg-error/10 border border-error/20 text-error mb-4';
+        messageDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Error: ${err.message}`;
+        await refreshComfyuiStatus();
+    }
+    
+    setTimeout(() => messageDiv.classList.add('hidden'), 5000);
+}
+
+function startStatusPolling() {
+    if (comfyuiRefreshInterval) clearInterval(comfyuiRefreshInterval);
+    showLogs();
+    startLogsPolling();
+    
+    let pollCount = 0;
+    comfyuiRefreshInterval = setInterval(async () => {
+        pollCount++;
+        await refreshComfyuiStatus();
+        
+        const statusDot = document.getElementById('comfyui-status-dot');
+        const isStable = statusDot.classList.contains('status-running') || statusDot.classList.contains('status-stopped');
+        
+        if (isStable || pollCount >= 24) {
+            clearInterval(comfyuiRefreshInterval);
+            comfyuiRefreshInterval = null;
+            stopLogsPolling();
+        }
+    }, 5000);
+}
+
+let logsVisible = false;
+let logsPollingInterval = null;
+
+function toggleLogs() {
+    const container = document.getElementById('comfyui-logs-container');
+    logsVisible = !logsVisible;
+    
+    if (logsVisible) {
+        container.classList.remove('hidden');
+        refreshLogs();
+    } else {
+        container.classList.add('hidden');
+        stopLogsPolling();
+    }
+}
+
+function showLogs() {
+    const container = document.getElementById('comfyui-logs-container');
+    logsVisible = true;
+    container.classList.remove('hidden');
+    refreshLogs();
+}
+
+async function refreshLogs() {
+    try {
+        const response = await fetch('/comfyui/logs?lines=150');
+        if (!response.ok) throw new Error('Failed to get logs');
+        
+        const data = await response.json();
+        const logsElement = document.getElementById('comfyui-logs');
+        
+        logsElement.textContent = data.success && data.logs ? data.logs : (data.message || '(Container not running)');
+        
+        const autoScroll = document.getElementById('logs-autoscroll');
+        if (autoScroll && autoScroll.checked) {
+            const container = logsElement.parentElement;
+            container.scrollTop = container.scrollHeight;
+        }
+    } catch (err) {
+        document.getElementById('comfyui-logs').textContent = 'Error fetching logs: ' + err.message;
+    }
+}
+
+function startLogsPolling() {
+    if (logsPollingInterval) clearInterval(logsPollingInterval);
+    logsPollingInterval = setInterval(() => { if (logsVisible) refreshLogs(); }, 2000);
+}
+
+function stopLogsPolling() {
+    if (logsPollingInterval) { clearInterval(logsPollingInterval); logsPollingInterval = null; }
+}
+
+document.addEventListener('DOMContentLoaded', refreshComfyuiStatus);
+
+async function createJob(type) {
+    try {
+        const response = await fetch('/jobs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: type })
+        });
+        
+        if (response.ok) {
+            const job = await response.json();
+            showToast(`Job #${job.id} created! Cost: ${job.cost_rcc} RCC`, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            const error = await response.json();
+            showToast(error.detail || 'Failed to create job', 'error');
+        }
+    } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+    }
+}
+
+async function buyPack(packId) {
+    try {
+        const response = await fetch('/checkout/topup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pack_id: packId })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            window.location.href = data.checkout_url;
+        } else {
+            const error = await response.json();
+            showToast(error.detail || 'Failed to create checkout', 'error');
+        }
+    } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+    }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} shadow-2xl border border-${type}/20 slide-up fixed top-4 right-4 z-[200] max-w-sm`;
+    toast.innerHTML = `
+        <span class="text-sm">${message}</span>
+        <button onclick="this.parentElement.remove()" class="btn btn-ghost btn-xs btn-circle">✕</button>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.transition = 'all 0.3s ease-out';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+</script>
+{% endblock %}

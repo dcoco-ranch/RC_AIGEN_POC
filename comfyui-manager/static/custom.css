@@ -1,0 +1,384 @@
+/* ============================================
+   ComfyUI Cloud Studio - Professional CSS
+   ============================================ */
+
+/* ============================================
+   Status Indicators
+   ============================================ */
+.status-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    transition: all 0.3s ease;
+}
+
+.status-dot.status-running {
+    background-color: #22c55e;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-dot.status-stopped,
+.status-dot.status-not_found {
+    background-color: #6b7280;
+}
+
+.status-dot.status-starting,
+.status-dot.status-stopping {
+    background-color: #f59e0b;
+    animation: statusBlink 1s ease-in-out infinite;
+}
+
+.status-dot.status-error,
+.status-dot.status-unknown {
+    background-color: #ef4444;
+    animation: statusBlink 0.5s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); 
+    }
+    50% { 
+        transform: scale(1.1); 
+        box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); 
+    }
+}
+
+@keyframes statusBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* ============================================
+   Glass Morphism Cards
+   ============================================ */
+.glass-card {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    background: rgba(30, 41, 59, 0.75);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ============================================
+   Gradient Text
+   ============================================ */
+.gradient-text {
+    background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.gradient-text-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ============================================
+   Glow Effects
+   ============================================ */
+.glow-primary {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.glow-success {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.glow-error {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+/* ============================================
+   Button Enhancements
+   ============================================ */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:active:not(.btn-disabled) {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+}
+
+.btn-success {
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+}
+
+.btn-success:hover {
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.45);
+}
+
+/* ============================================
+   Card Animations
+   ============================================ */
+.card-hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   Smooth Scrollbar
+   ============================================ */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.4);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.6);
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.4) rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   Terminal/Logs
+   ============================================ */
+.terminal-font {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.logs-container {
+    background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+.slide-up {
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.scale-in {
+    animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
+.skeleton-loading {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 25%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.05) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ============================================
+   Tooltip Enhancement
+   ============================================ */
+.tooltip::before {
+    border-radius: 8px;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* ============================================
+   Badge Enhancements
+   ============================================ */
+.badge {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+.badge-success {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+.badge-error {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+/* ============================================
+   Form Enhancements
+   ============================================ */
+.input:focus,
+.select:focus,
+.textarea:focus {
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ============================================
+   Alert Enhancements
+   ============================================ */
+.alert {
+    border-radius: 12px;
+    border-width: 1px;
+}
+
+/* ============================================
+   Menu Enhancements
+   ============================================ */
+.menu li > a:hover,
+.menu li > button:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.menu li > a.active,
+.menu li > button.active {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+}
+
+/* ============================================
+   Dropdown Enhancements
+   ============================================ */
+.dropdown-content {
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   Stats Card
+   ============================================ */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #c084fc);
+}
+
+/* ============================================
+   Background Patterns
+   ============================================ */
+.bg-grid {
+    background-image: 
+        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+}
+
+.bg-dots {
+    background-image: radial-gradient(rgba(99, 102, 241, 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 768px) {
+    .glass-card {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    
+    .gradient-text {
+        font-size: 1.5rem;
+    }
+}
+
+/* ============================================
+   Dark Mode Optimizations
+   ============================================ */
+[data-theme="night"] {
+    --glass-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+    .glass-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .gradient-text {
+        -webkit-text-fill-color: #6366f1;
+    }
+}

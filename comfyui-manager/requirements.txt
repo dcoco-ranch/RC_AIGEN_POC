@@ -1,0 +1,29 @@
+# FastAPI & Web
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+jinja2>=3.1.3
+aiofiles>=23.2.1
+
+# Database
+supabase>=2.3.4
+python-dotenv>=1.0.1
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.0.0
+httpx>=0.25.0
+
+# Payments
+stripe>=8.0.0
+
+# Utilities
+pydantic>=2.9.0
+pydantic-settings>=2.5.0
+email-validator>=2.0.0
+
+# HTTP client for ComfyUI API
+aiohttp>=3.9.3
+
+# Docker management (Python SDK instead of CLI)
+docker>=7.0.0

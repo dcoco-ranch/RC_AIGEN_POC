@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}ComfyUI Cloud Studio - Professional AI Generation Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative min-h-[75vh] flex items-center justify-center rounded-3xl overflow-hidden mb-16">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 bg-gradient-to-br from-base-300/50 via-base-200 to-base-300/50">
+        <div class="absolute inset-0 bg-grid opacity-50"></div>
+        <div class="absolute top-1/4 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 -right-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative z-10 text-center px-4 max-w-4xl mx-auto">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
+            <span class="w-2 h-2 bg-success rounded-full animate-pulse"></span>
+            <span class="text-sm font-medium">Now with GPU acceleration</span>
+        </div>
+        
+        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+            <span class="gradient-text">ComfyUI</span>
+            <br>
+            <span class="text-base-content/90">Cloud Studio</span>
+        </h1>
+        
+        <p class="text-xl md:text-2xl opacity-70 mb-4 font-medium">
+            Professional AI Image & Video Generation Platform
+        </p>
+        <p class="text-base opacity-50 mb-10 max-w-xl mx-auto">
+            Run ComfyUI workflows in the cloud with enterprise-grade GPU infrastructure. Pay only for what you use with Ranch Cloud Credits (RCC).
+        </p>
+        
+        {% if not user %}
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/register" class="btn btn-primary btn-lg gap-2 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all px-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Start Free
+            </a>
+            <a href="/login" class="btn btn-ghost btn-lg gap-2 border border-base-content/10 hover:bg-base-content/5">
+                Sign In
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </a>
+        </div>
+        {% else %}
+        <a href="/dashboard" class="btn btn-primary btn-lg gap-2 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all px-8">
+            Open Dashboard
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+        </a>
+        {% endif %}
+        
+        <!-- Trust Indicators -->
+        <div class="flex items-center justify-center gap-8 mt-12 opacity-50">
+            <div class="flex items-center gap-2 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Secure
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                GPU Powered
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Pay-as-you-go
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Pricing Section -->
+<section class="py-16">
+    <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-warning/10 border border-warning/20 mb-4">
+            <span class="text-lg">💰</span>
+            <span class="text-sm font-medium text-warning">Simple Pricing</span>
+        </div>
+        <h2 class="text-4xl font-bold mb-4">Pay Per Task</h2>
+        <p class="text-lg opacity-60 max-w-lg mx-auto">Simple, transparent pricing. Only pay for the compute you use.</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-16">
+        <!-- Image Task -->
+        <div class="glass-card rounded-2xl p-8 text-center hover:border-primary/30 transition-all group">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center text-4xl mx-auto mb-6 group-hover:scale-110 transition-transform">
+                🖼️
+            </div>
+            <h3 class="text-2xl font-bold mb-2">Image Generation</h3>
+            <p class="text-sm opacity-60 mb-6">Create stunning AI-generated images with ComfyUI workflows</p>
+            <div class="flex items-baseline justify-center gap-1 mb-4">
+                <span class="text-5xl font-black gradient-text">1</span>
+                <span class="text-lg font-bold opacity-50">RCC</span>
+            </div>
+            <p class="text-xs opacity-50">per image task</p>
+        </div>
+
+        <!-- Video Task -->
+        <div class="glass-card rounded-2xl p-8 text-center hover:border-secondary/30 transition-all group">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center text-4xl mx-auto mb-6 group-hover:scale-110 transition-transform">
+                🎬
+            </div>
+            <h3 class="text-2xl font-bold mb-2">Video Generation</h3>
+            <p class="text-sm opacity-60 mb-6">Create AI-powered videos and animations from your prompts</p>
+            <div class="flex items-baseline justify-center gap-1 mb-4">
+                <span class="text-5xl font-black text-secondary">5</span>
+                <span class="text-lg font-bold opacity-50">RCC</span>
+            </div>
+            <p class="text-xs opacity-50">per video task</p>
+        </div>
+    </div>
+</section>
+
+<!-- Credit Packs Section -->
+<section class="py-16">
+    <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+            <span class="text-lg">💎</span>
+            <span class="text-sm font-medium text-primary">Credit Packs</span>
+        </div>
+        <h2 class="text-4xl font-bold mb-4">Top Up Credits</h2>
+        <p class="text-lg opacity-60 max-w-lg mx-auto">Purchase credit packs to fuel your creative projects.</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        {% for pack in topup_packs %}
+        <div class="glass-card rounded-2xl p-6 text-center hover:border-primary/30 transition-all hover:-translate-y-1">
+            <div class="badge badge-ghost badge-sm mb-4">Credit Pack</div>
+            <h3 class="text-xl font-bold mb-4">{{ pack.name }}</h3>
+            <div class="flex items-baseline justify-center gap-1 mb-2">
+                <span class="text-4xl font-black text-primary">{{ pack.credits }}</span>
+                <span class="text-sm font-bold opacity-50">RCC</span>
+            </div>
+            <div class="text-2xl font-bold text-success mb-6">
+                ${{ "%.2f"|format(pack.price / 100) }}
+            </div>
+            
+            {% if user %}
+            <form action="/checkout/topup" method="post">
+                <input type="hidden" name="pack_id" value="{{ pack.pack_id }}">
+                <button type="submit" class="btn btn-primary btn-outline btn-block">Purchase</button>
+            </form>
+            {% else %}
+            <a href="/login" class="btn btn-ghost btn-outline btn-block border-base-content/10">Sign in to buy</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Subscriptions Section -->
+<section class="py-16">
+    <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 mb-4">
+            <span class="text-lg">🔄</span>
+            <span class="text-sm font-medium text-secondary">Monthly Plans</span>
+        </div>
+        <h2 class="text-4xl font-bold mb-4">Subscription Plans</h2>
+        <p class="text-lg opacity-60 max-w-lg mx-auto">Save up to 20% with monthly subscriptions and get priority support.</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {% for plan in subscription_plans %}
+        <div class="glass-card rounded-2xl overflow-hidden transition-all hover:-translate-y-2 {{ 'ring-2 ring-primary shadow-xl shadow-primary/20' if plan.plan_id == 'pro' }}">
+            {% if plan.plan_id == 'pro' %}
+            <div class="bg-gradient-to-r from-primary to-secondary py-2 text-center">
+                <span class="text-xs font-bold text-white uppercase tracking-wider">Most Popular</span>
+            </div>
+            {% endif %}
+            
+            <div class="p-8 text-center">
+                <h3 class="text-2xl font-bold mb-2">{{ plan.name }}</h3>
+                <div class="flex items-baseline justify-center gap-1 my-6">
+                    <span class="text-lg opacity-50">$</span>
+                    <span class="text-5xl font-black">{{ "%.0f"|format(plan.price_monthly / 100) }}</span>
+                    <span class="text-sm opacity-50">/mo</span>
+                </div>
+                
+                <ul class="text-left space-y-3 mb-8">
+                    <li class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        <span><strong class="text-primary">{{ plan.monthly_rcc }}</strong> RCC credits/month</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        <span>Priority GPU access</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        <span>Priority support</span>
+                    </li>
+                </ul>
+
+                {% if user %}
+                <form action="/checkout/subscription" method="post">
+                    <input type="hidden" name="plan_id" value="{{ plan.plan_id }}">
+                    <input type="hidden" name="billing_period" value="monthly">
+                    <button type="submit" class="btn {{ 'btn-primary shadow-lg shadow-primary/25' if plan.plan_id == 'pro' else 'btn-ghost border border-base-content/10' }} btn-block">
+                        Subscribe Now
+                    </button>
+                </form>
+                {% else %}
+                <a href="/login" class="btn btn-ghost border border-base-content/10 btn-block">Sign in to subscribe</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-16">
+    <div class="glass-card rounded-3xl p-12">
+        <div class="text-center mb-12">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-4">
+                <span class="text-lg">✨</span>
+                <span class="text-sm font-medium text-accent">Why Choose Us</span>
+            </div>
+            <h2 class="text-4xl font-bold mb-4">Platform Features</h2>
+            <p class="text-lg opacity-60 max-w-lg mx-auto">Everything you need for professional AI generation.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-3xl mx-auto mb-6">
+                    🚀
+                </div>
+                <h3 class="text-xl font-bold mb-3">GPU-Powered</h3>
+                <p class="opacity-60 text-sm">High-performance NVIDIA GPU computing nodes for blazing fast generation.</p>
+            </div>
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-secondary/20 to-secondary/5 flex items-center justify-center text-3xl mx-auto mb-6">
+                    🔐
+                </div>
+                <h3 class="text-xl font-bold mb-3">Enterprise Security</h3>
+                <p class="opacity-60 text-sm">JWT authentication, encrypted storage, and isolated container environments.</p>
+            </div>
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center text-3xl mx-auto mb-6">
+                    📊
+                </div>
+                <h3 class="text-xl font-bold mb-3">Full Transparency</h3>
+                <p class="opacity-60 text-sm">Complete audit trail of all transactions, usage history, and job details.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-16">
+    <div class="text-center">
+        <h2 class="text-4xl font-bold mb-4">Ready to Create?</h2>
+        <p class="text-lg opacity-60 mb-8 max-w-lg mx-auto">Join thousands of creators using ComfyUI Cloud Studio for their AI generation needs.</p>
+        {% if not user %}
+        <a href="/register" class="btn btn-primary btn-lg gap-2 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all px-10">
+            Get Started Free
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+        </a>
+        {% else %}
+        <a href="/dashboard" class="btn btn-primary btn-lg gap-2 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all px-10">
+            Go to Dashboard
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+        </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

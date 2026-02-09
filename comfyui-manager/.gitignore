@@ -1,0 +1,94 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# Docker volumes (local storage - large model files)
+storage/
+storage-models/hf-hub/*
+storage-models/torch-hub/*
+storage-models/models/**/*
+!storage-models/models/**/
+!storage-models/models/**/.gitkeep
+!storage-models/hf-hub/.gitkeep
+!storage-models/torch-hub/.gitkeep
+
+# User uploaded/generated content
+storage-user/input/*
+storage-user/output/*
+!storage-user/input/.gitkeep
+!storage-user/output/.gitkeep
+!storage-user/output/_output_images_will_be_put_here
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Secrets
+secrets/
+*.pem
+*.key
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Backup files
+*.bak
+*.backup

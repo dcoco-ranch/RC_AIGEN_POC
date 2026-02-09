@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - ComfyUI Cloud Studio{% endblock %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-[calc(100vh-200px)] py-12">
+    <div class="w-full max-w-md">
+        <!-- Logo & Title -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary mx-auto mb-4 flex items-center justify-center shadow-lg shadow-primary/25">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold gradient-text">Create Account</h1>
+            <p class="text-sm opacity-50 mt-2">Start your ComfyUI Cloud Studio journey</p>
+        </div>
+        
+        <!-- Register Card -->
+        <div class="glass-card rounded-2xl p-8">
+            <div id="alert-container"></div>
+            {% if error %}
+                <div class="alert bg-error/10 border border-error/20 text-error text-sm mb-6 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+            
+            <form action="/auth/register" method="post" class="space-y-5" id="registerForm">
+                <div class="form-control">
+                    <label class="label pb-1" for="email">
+                        <span class="label-text font-medium">Email Address</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </span>
+                        <input type="email" id="email" name="email" required placeholder="you@example.com" class="input input-bordered w-full pl-12 bg-base-200/50 border-base-content/10 focus:border-primary focus:bg-base-100" />
+                    </div>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label pb-1" for="password">
+                        <span class="label-text font-medium">Password</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </span>
+                        <input type="password" id="password" name="password" required minlength="8" placeholder="Min 8 characters" class="input input-bordered w-full pl-12 bg-base-200/50 border-base-content/10 focus:border-primary focus:bg-base-100" />
+                    </div>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label pb-1" for="confirmPassword">
+                        <span class="label-text font-medium">Confirm Password</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </span>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Repeat password" class="input input-bordered w-full pl-12 bg-base-200/50 border-base-content/10 focus:border-primary focus:bg-base-100" />
+                    </div>
+                </div>
+                
+                <div class="form-control pt-2">
+                    <button type="submit" class="btn btn-primary btn-block shadow-lg shadow-primary/25 h-12 text-base" id="submitBtn">
+                        Create Account
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </button>
+                    <button type="button" class="btn btn-primary btn-block h-12 hidden" disabled id="loadingBtn">
+                        <span class="loading loading-spinner loading-sm"></span>
+                        Creating account...
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Divider -->
+            <div class="divider text-xs uppercase opacity-40 my-6">Or</div>
+            
+            <a href="/auth/gitlab" class="btn btn-outline btn-block h-12 gap-3 hover:bg-[#fc6d26] hover:border-[#fc6d26] hover:text-white transition-all group border-base-content/10">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" class="text-[#fc6d26] group-hover:text-white transition-colors">
+                    <path d="m15.734 6.1-.022-.058L13.534.358a.57.57 0 0 0-.563-.356.583.583 0 0 0-.328.122.582.582 0 0 0-.193.294l-1.47 4.499H5.025l-1.47-4.5a.572.572 0 0 0-.52-.416.569.569 0 0 0-.569.355L.289 6.04l-.022.057a4.044 4.044 0 0 0 1.341 4.668L1.61 10.77l.002.001 3.525 2.64 1.742 1.32.998.755a.672.672 0 0 0 .814 0l.998-.755 1.742-1.32 3.527-2.641h.001l.001-.002a4.05 4.05 0 0 0 1.341-4.669l-.567.001Z"/>
+                </svg>
+                Sign up with GitLab
+            </a>
+        </div>
+        
+        <!-- Login Link -->
+        <p class="text-center mt-8 text-sm opacity-70">
+            Already have an account? 
+            <a href="/login" class="text-primary font-semibold hover:underline">Sign in</a>
+        </p>
+    </div>
+</div>
+
+<script>
+function showAlert(message, type = 'error') {
+    const container = document.getElementById('alert-container');
+    const bgColor = type === 'success' ? 'bg-success/10 border-success/20 text-success' : 'bg-error/10 border-error/20 text-error';
+    const iconPath = type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z';
+    container.innerHTML = `
+        <div class="alert ${bgColor} text-sm mb-6 rounded-xl slide-up border">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}" /></svg>
+            <span>${message}</span>
+        </div>
+    `;
+}
+
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingBtn = document.getElementById('loadingBtn');
+    const setLoading = (isLoading) => {
+        submitBtn.classList.toggle('hidden', isLoading);
+        loadingBtn.classList.toggle('hidden', !isLoading);
+    };
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    document.getElementById('alert-container').innerHTML = '';
+
+    if (password !== confirmPassword) {
+        showAlert('Passwords do not match');
+        return;
+    }
+    
+    setLoading(true);
+
+    try {
+        const response = await fetch('/auth/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, password})
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.access_token) {
+                document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
+            }
+             
+            showAlert('Account created! Redirecting to dashboard...', 'success');
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 1000);
+           
+        } else {
+            const error = await response.json();
+            showAlert(error.detail || 'Registration failed');
+            setLoading(false);
+        }
+    } catch (err) {
+        showAlert('Registration failed: ' + err.message);
+        setLoading(false);
+    }
+});
+</script>
+{% endblock %}

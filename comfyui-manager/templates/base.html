@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ComfyUI Manager{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS & DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-in-right': 'slideInRight 0.3s ease-out',
+                        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+                        'shimmer': 'shimmer 2s linear infinite',
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/custom.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .slide-up { animation: slideUp 0.4s ease-out; }
+        
+        /* Glass effect */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Glow effects */
+        .glow-primary { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        .glow-success { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        
+        /* Modern scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.7); }
+
+        /* Subtle grid background */
+        .bg-grid {
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-base-200 bg-grid flex flex-col">
+    
+    <!-- Navbar -->
+    <div class="navbar bg-base-100/80 backdrop-blur-lg shadow-lg sticky top-0 z-50 border-b border-base-content/5 px-4 lg:px-8">
+        <div class="flex-1">
+            <a href="/" class="btn btn-ghost text-xl gap-3 hover:bg-transparent group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg group-hover:shadow-primary/30 transition-all duration-300 group-hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div class="flex flex-col items-start gap-0">
+                    <span class="font-bold text-lg gradient-text leading-tight">ComfyUI</span>
+                    <span class="text-[10px] font-semibold opacity-50 tracking-[0.2em] uppercase">Cloud Studio</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="flex-none gap-3">
+            {% if user %}
+                <!-- Quick Stats -->
+                <div class="hidden md:flex items-center gap-3 mr-2">
+                    <div class="flex items-center gap-2 px-4 py-2 bg-base-200/50 rounded-xl border border-base-content/5">
+                        <div class="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+                        <span class="text-xs font-medium opacity-70">Online</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="font-bold text-sm text-primary">{{ user.rcc_balance|default(0) }}</span>
+                        <span class="text-xs opacity-60">RCC</span>
+                    </div>
+                </div>
+                
+                <!-- Notifications -->
+                <button class="btn btn-ghost btn-circle btn-sm relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+                </button>
+                
+                <!-- User Menu -->
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost gap-2 pl-2 pr-3 h-12 rounded-xl hover:bg-base-200/50">
+                        <div class="avatar placeholder">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center">
+                                <span class="text-sm font-bold">{{ user.email[0]|upper }}</span>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex flex-col items-start">
+                            <span class="text-sm font-medium leading-tight">{{ user.email.split('@')[0] }}</span>
+                            <span class="text-[10px] opacity-50">{{ 'Admin' if user.is_admin else 'Pro Plan' }}</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <ul tabindex="0" class="mt-2 z-[1] p-2 shadow-2xl menu menu-sm dropdown-content bg-base-100 rounded-xl w-56 border border-base-content/10">
+                        <li class="px-3 py-2 border-b border-base-content/5 mb-2">
+                            <div class="flex flex-col gap-0.5 hover:bg-transparent cursor-default">
+                                <span class="font-semibold">{{ user.email }}</span>
+                                <span class="text-xs opacity-50">Signed in</span>
+                            </div>
+                        </li>
+                        <li><a href="/dashboard" class="flex items-center gap-2 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                            Dashboard
+                        </a></li>
+                        <li><a href="#" class="flex items-center gap-2 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            Settings
+                        </a></li>
+                        {% if user.is_admin %}
+                        <li><a href="/admin/dashboard" class="flex items-center gap-2 rounded-lg text-warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                            Admin Panel
+                        </a></li>
+                        {% endif %}
+                        <div class="divider my-1 opacity-10"></div>
+                        <li><a href="/auth/logout" class="flex items-center gap-2 rounded-lg text-error hover:bg-error/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            Sign out
+                        </a></li>
+                    </ul>
+                </div>
+            {% else %}
+                <div class="flex gap-2">
+                    <a href="/login" class="btn btn-ghost btn-sm">Sign in</a>
+                    <a href="/register" class="btn btn-primary btn-sm shadow-lg shadow-primary/25">Get Started</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 fade-in max-w-7xl">
+        {% if messages %}
+            <div class="toast toast-top toast-end z-[100]">
+                {% for message in messages %}
+                    <div class="alert alert-info shadow-2xl border border-info/20 slide-up">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-sm">{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" class="btn btn-ghost btn-xs btn-circle">✕</button>
+                    </div>
+                {% endfor %}
+            </div>
+            <script>
+                setTimeout(() => {
+                    document.querySelectorAll('.toast .alert').forEach(el => {
+                        el.style.transition = 'all 0.3s ease-out';
+                        el.style.opacity = '0';
+                        el.style.transform = 'translateX(100%)';
+                        setTimeout(() => el.remove(), 300);
+                    });
+                }, 5000);
+            </script>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer footer-center p-8 bg-base-300/50 backdrop-blur text-base-content border-t border-base-content/5">
+        <aside class="max-w-md">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <span class="font-bold gradient-text">ComfyUI Cloud Studio</span>
+            </div>
+            <p class="text-sm opacity-60">Professional AI image generation in the cloud. Powered by Ranch Computing infrastructure.</p>
+            <p class="text-xs opacity-40 mt-2">© 2026 Ranch Computing. All rights reserved.</p>
+            <nav class="flex gap-6 mt-4">
+                <a href="#" class="link link-hover text-xs opacity-60 hover:opacity-100 transition-opacity">Terms of Service</a>
+                <a href="#" class="link link-hover text-xs opacity-60 hover:opacity-100 transition-opacity">Privacy Policy</a>
+                <a href="#" class="link link-hover text-xs opacity-60 hover:opacity-100 transition-opacity">System Status</a>
+                <a href="#" class="link link-hover text-xs opacity-60 hover:opacity-100 transition-opacity">Documentation</a>
+            </nav>
+        </aside>
+    </footer>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

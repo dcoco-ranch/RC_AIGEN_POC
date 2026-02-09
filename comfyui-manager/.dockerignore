@@ -1,0 +1,57 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv
+ENV
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs and databases
+logs/*
+*.log
+*.db
+*.sqlite3
+
+# Local storage (use Docker volumes instead)
+storage/
+storage-*/
+models/
+outputs/
+input/
+custom_nodes/
+
+# Docker compose files for other services
+docker-compose-comfyui.yml
+
+# Environment files with secrets
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+!README.md
+
+# Tests
+tests/
+test_*.py
+*_test.py
+.pytest_cache
+.coverage
+
+# Build artifacts
+dist/
+build/
+*.egg-info

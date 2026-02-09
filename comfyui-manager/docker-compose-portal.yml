@@ -1,0 +1,71 @@
+services:
+  portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: comfyui-portal:latest
+    container_name: comfyui-portal
+    environment:
+      # Database
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_KEY=${SUPABASE_KEY:-}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/comfyui_manager.db}
+      # Security
+      - SECRET_KEY=${SECRET_KEY:-supersecretkey-change-in-production}
+      # GitLab OAuth (self-hosted supported)
+      - GITLAB_BASE_URL=${GITLAB_BASE_URL:-https://gitlab.com}
+      - GITLAB_CLIENT_ID=${GITLAB_CLIENT_ID:-}
+      - GITLAB_CLIENT_SECRET=${GITLAB_CLIENT_SECRET:-}
+      - GITLAB_REDIRECT_URI=${GITLAB_REDIRECT_URI:-http://localhost:8000/auth/gitlab/callback}
+      # Admin access control
+      - ADMIN_ALLOWED_EMAILS=${ADMIN_ALLOWED_EMAILS:-}
+      - ADMIN_ALLOWED_DOMAINS=${ADMIN_ALLOWED_DOMAINS:-}
+      # Payments
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      # ComfyUI connection (via Docker network)
+      - COMFYUI_URL=http://comfyui:8188
+      # Docker management
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - COMPOSE_PROJECT_DIR=/app
+    ports:
+      - "8000:8000"
+    volumes:
+      # Docker socket for managing ComfyUI container
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Persistent data
+      - portal-data:/app/data
+      - portal-logs:/app/logs
+      # Mount compose file for docker compose commands
+      - ./docker-compose-comfyui.yml:/app/docker-compose-comfyui.yml:ro
+      # Development: Mount UI files for hot-reloading
+      - ./templates:/app/templates
+      - ./static:/app/static
+      # ComfyUI shared volumes (for model management from portal)
+      - comfyui-storage:/comfyui/storage
+      - comfyui-models:/comfyui/models
+    networks:
+      - comfyui-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  portal-data:
+    name: comfyui-portal-data
+  portal-logs:
+    name: comfyui-portal-logs
+  comfyui-storage:
+    name: comfyui-storage
+  comfyui-models:
+    name: comfyui-models
+
+networks:
+  comfyui-network:
+    name: comfyui-network
+    external: true

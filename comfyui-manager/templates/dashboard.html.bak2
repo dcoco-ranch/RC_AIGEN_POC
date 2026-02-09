@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ComfyUI Manager{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    
+    <!-- Sidebar / User Info -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- User Profile Card -->
+        <div class="card bg-base-100 shadow-xl border border-base-300 overflow-hidden group">
+            <div class="h-24 bg-gradient-to-r from-primary/20 to-secondary/20 block"></div>
+            <div class="card-body items-center text-center -mt-12 pt-0 relative z-10">
+                <div class="avatar placeholder mb-2 transition-transform duration-300 group-hover:scale-105">
+                    <div class="bg-neutral text-neutral-content rounded-full w-24 ring ring-base-100 ring-offset-2">
+                        <span class="text-3xl">{{ user.email[0]|upper }}</span>
+                    </div>
+                </div>
+                <h2 class="card-title text-xl">{{ user.email }}</h2>
+                <div class="badge badge-secondary badge-outline mt-1 font-mono text-xs">USER</div>
+            </div>
+            <div class="card-body pt-0 border-t border-base-200">
+                <div class="stats stats-vertical shadow-sm w-full bg-base-200/50 mt-4 rounded-xl">
+                    <div class="stat place-items-center p-3">
+                        <div class="stat-title text-xs uppercase tracking-wider font-bold opacity-60">Available Balance</div>
+                        <div class="stat-value text-primary text-3xl font-black">{{ balance }}</div>
+                        <div class="stat-desc font-bold text-success">RCC Credits</div>
+                    </div>
+                </div>
+                 <div class="mt-4 w-full">
+                    <button class="btn btn-outline btn-sm btn-block group-hover:btn-primary transition-colors">Manage Account</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Menu -->
+        <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body p-4">
+                <ul class="menu menu-md bg-base-100 rounded-box w-full gap-1">
+                    <li>
+                        <a href="#" class="active bg-primary text-primary-content font-semibold">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="hover:bg-base-200 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            Billing & Top Up
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="hover:bg-base-200 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Area -->
+    <div class="lg:col-span-3 space-y-6">
+        
+        <!-- Service Control Section -->
+        <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-base-200 pb-4">
+                    <div>
+                        <h2 class="card-title text-2xl flex items-center gap-3">
+                            <span class="text-3xl">🖥️</span> 
+                            ComfyUI Service
+                        </h2>
+                        <p class="text-sm opacity-60 mt-1">Manage your ComfyUI workspace instance</p>
+                    </div>
+                    
+                    <div class="badge badge-lg gap-2 p-4 h-auto shadow-sm" id="status-badge">
+                        <span id="comfyui-status-dot" class="status-dot status-unknown"></span>
+                        <span id="comfyui-status-text" class="font-bold tracking-wide">Checking...</span>
+                    </div>
+                </div>
+
+                <!-- Status Messages & URLs -->
+                <div id="comfyui-message" class="alert shadow-md mb-4 hidden"></div>
+
+                <div id="comfyui-url" class="alert alert-success shadow-md mb-6 bg-success/10 border-success/20 text-success-content hidden">
+                    <div class="flex items-center gap-4 w-full">
+                        <div class="p-2 bg-success text-success-content rounded-full shadow-lg pulse-soft">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg">Service is Ready!</h3>
+                            <div class="text-sm opacity-90">Your ComfyUI instance is running and accessible.</div>
+                        </div>
+                        <a id="comfyui-link" href="#" target="_blank" class="btn btn-primary shadow-lg gap-2 border-0">
+                            Open Interface
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Main Controls -->
+                <div class="flex flex-wrap gap-3 items-center">
+                    <div class="join shadow-md">
+                        <button class="btn btn-success join-item gap-2 px-6" id="btn-start" onclick="comfyuiAction('start')" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                            Start
+                        </button>
+                        <button class="btn btn-error join-item gap-2 px-6" id="btn-stop" onclick="comfyuiAction('stop')" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" /></svg>
+                            Stop
+                        </button>
+                    </div>
+                    
+                    <button class="btn btn-neutral gap-2" id="btn-restart" onclick="comfyuiAction('restart')" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        Restart
+                    </button>
+                    
+                    <div class="flex-grow"></div>
+                    
+                    <div class="tooltip" data-tip="Refresh Status">
+                        <button class="btn btn-ghost btn-circle" onclick="refreshComfyuiStatus()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        </button>
+                    </div>
+                    <div class="tooltip" data-tip="View Logs">
+                        <button class="btn btn-ghost btn-circle" id="btn-logs" onclick="toggleLogs()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Logs Viewer -->
+                <div id="comfyui-logs-container" class="mt-6 hidden transition-all duration-300">
+                     <div class="mockup-code bg-[#0d1117] text-[#c9d1d9] shadow-inner max-h-[500px] overflow-y-auto border border-gray-700/50">
+                        <div class="flex justify-between items-center px-4 py-2 sticky top-0 bg-[#0d1117]/95 backdrop-blur-sm z-10 border-b border-gray-700">
+                             <div class="flex gap-2">
+                                <div class="w-3 h-3 rounded-full bg-error"></div>
+                                <div class="w-3 h-3 rounded-full bg-warning"></div>
+                                <div class="w-3 h-3 rounded-full bg-success"></div>
+                                <span class="ml-2 text-xs font-mono opacity-50">console.log</span>
+                             </div>
+                             <label class="label cursor-pointer gap-2 py-0">
+                                <span class="label-text text-xs text-gray-400">Auto-scroll</span> 
+                                <input type="checkbox" class="toggle toggle-xs toggle-success" id="logs-autoscroll" checked />
+                             </label>
+                        </div>
+                        <pre id="comfyui-logs" class="px-4 py-2 text-xs font-mono leading-relaxed"></pre>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Launch New Job -->
+            <div class="card bg-base-100 shadow-xl border border-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-base opacity-70 mb-2">🚀 Launch New Job</h3>
+                     <div class="grid grid-cols-1 gap-3">
+                        <button class="btn btn-outline btn-primary h-auto py-3 justify-start gap-3 group" onclick="createJob('IMAGE_TASK')">
+                            <span class="text-2xl group-hover:scale-110 transition-transform">🖼️</span>
+                            <div class="flex flex-col items-start gap-0.5">
+                                <span class="font-bold">Image Gen Task</span>
+                                <span class="text-xs opacity-70">Cost: 1 RCC</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-outline btn-secondary h-auto py-3 justify-start gap-3 group" onclick="createJob('VIDEO_TASK')">
+                            <span class="text-2xl group-hover:scale-110 transition-transform">🎬</span>
+                            <div class="flex flex-col items-start gap-0.5">
+                                <span class="font-bold">Video Gen Task</span>
+                                <span class="text-xs opacity-70">Cost: 5 RCC</span>
+                            </div>
+                        </button>
+                     </div>
+                </div>
+            </div>
+
+            <!-- Recent Jobs -->
+            <div class="card bg-base-100 shadow-xl border border-base-300">
+                <div class="card-body">
+                    <h3 class="card-title text-base opacity-70 mb-2">📋 Recent Activity</h3>
+                    <div class="overflow-x-auto">
+                        {% if jobs %}
+                        <table class="table table-xs table-zebra">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in jobs[:5] %}
+                                <tr>
+                                    <td class="font-mono opacity-50">#{{ job.id }}</td>
+                                    <td>
+                                        <div class="flex items-center gap-1">
+                                            {% if job.type == 'IMAGE_TASK' %}🖼️{% else %}🎬{% endif %}
+                                            <span class="hidden sm:inline">{{ job.type }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="badge badge-xs {{ 'badge-success' if job.status == 'completed' else 'badge-warning' if job.status == 'running' else 'badge-ghost' }}">
+                                            {{ job.status }}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                             <div class="flex flex-col items-center justify-center py-6 opacity-50">
+                                <span class="text-3xl mb-2">📉</span>
+                                <span class="text-sm">No activity yet</span>
+                             </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+// ComfyUI Service Control
+let comfyuiRefreshInterval = null;
+
+async function refreshComfyuiStatus() {
+    try {
+        const response = await fetch('/comfyui/status');
+        if (!response.ok) {
+            throw new Error('Failed to get status');
+        }
+        
+        const data = await response.json();
+        updateComfyuiUI(data);
+    } catch (err) {
+        updateComfyuiUI({
+            status: 'error',
+            message: 'Unable to check status: ' + err.message
+        });
+    }
+}
+
+function updateComfyuiUI(data) {
+    const statusDot = document.getElementById('comfyui-status-dot');
+    const statusText = document.getElementById('comfyui-status-text');
+    const urlDiv = document.getElementById('comfyui-url');
+    const urlLink = document.getElementById('comfyui-link');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const btnRestart = document.getElementById('btn-restart');
+    
+    // Remove all status classes
+    statusDot.className = 'status-dot';
+    
+    // Update based on status
+    switch (data.status) {
+        case 'running':
+            statusDot.classList.add('status-running');
+            statusText.textContent = data.message || 'Running';
+            statusText.className = 'font-bold tracking-wide text-success';
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            btnRestart.disabled = false;
+            if (data.url) {
+                // DaisyUI: remove hidden class
+                urlDiv.classList.remove('hidden');
+                urlDiv.classList.add('flex');
+                urlLink.href = data.url;
+            }
+            break;
+        case 'stopped':
+        case 'not_found':
+            statusDot.classList.add('status-stopped');
+            statusText.textContent = data.message || 'Stopped';
+            statusText.className = 'font-bold tracking-wide text-neutral-content opacity-50';
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            btnRestart.disabled = true;
+            urlDiv.classList.add('hidden');
+            urlDiv.classList.remove('flex');
+            break;
+        case 'starting':
+            statusDot.classList.add('status-starting');
+            statusText.textContent = data.message || 'Starting...';
+            statusText.className = 'font-bold tracking-wide text-warning';
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            btnRestart.disabled = true;
+            urlDiv.classList.add('hidden');
+            urlDiv.classList.remove('flex');
+            break;
+        case 'stopping':
+            statusDot.classList.add('status-stopping');
+            statusText.textContent = data.message || 'Stopping...';
+            statusText.className = 'font-bold tracking-wide text-error';
+            btnStart.disabled = true;
+            btnStop.disabled = true;
+            btnRestart.disabled = true;
+            urlDiv.classList.add('hidden');
+            urlDiv.classList.remove('flex');
+            break;
+        case 'error':
+        default:
+            statusDot.classList.add('status-error');
+            statusText.textContent = data.message || 'Error';
+            statusText.className = 'font-bold tracking-wide text-error/80';
+            btnStart.disabled = false;
+            btnStop.disabled = false;
+            btnRestart.disabled = false;
+            urlDiv.classList.add('hidden');
+            urlDiv.classList.remove('flex');
+            break;
+    }
+}
+
+async function comfyuiAction(action) {
+    const messageDiv = document.getElementById('comfyui-message');
+    
+    try {
+        // Disable buttons during action
+        document.getElementById('btn-start').disabled = true;
+        document.getElementById('btn-stop').disabled = true;
+        document.getElementById('btn-restart').disabled = true;
+        
+        messageDiv.classList.remove('hidden');
+        messageDiv.className = 'alert alert-info shadow-md mb-4';
+        messageDiv.textContent = `${action.charAt(0).toUpperCase() + action.slice(1)}ing ComfyUI...`;
+        
+        const response = await fetch(`/comfyui/${action}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            messageDiv.className = 'alert alert-success shadow-md mb-4';
+            messageDiv.textContent = data.message;
+            
+            // Start polling for status updates
+            if (action === 'start' || action === 'restart') {
+                startStatusPolling();
+            }
+        } else {
+            messageDiv.className = 'alert alert-error shadow-md mb-4';
+            messageDiv.textContent = data.message || 'Action failed';
+        }
+        
+        // Refresh status after action
+        await refreshComfyuiStatus();
+        
+    } catch (err) {
+        messageDiv.classList.remove('hidden');
+        messageDiv.className = 'alert alert-error shadow-md mb-4';
+        messageDiv.textContent = 'Error: ' + err.message;
+        await refreshComfyuiStatus();
+    }
+    
+    // Hide message after 5 seconds
+    setTimeout(() => {
+        messageDiv.classList.add('hidden');
+    }, 5000);
+}
+
+function startStatusPolling() {
+    // Clear existing interval if any
+    if (comfyuiRefreshInterval) {
+        clearInterval(comfyuiRefreshInterval);
+    }
+    
+    // Show logs automatically during startup
+    showLogs();
+    startLogsPolling();
+    
+    // Poll every 5 seconds for 2 minutes
+    let pollCount = 0;
+    const maxPolls = 24; // 2 minutes
+    
+    comfyuiRefreshInterval = setInterval(async () => {
+        pollCount++;
+        await refreshComfyuiStatus();
+        
+        // Check if we should stop polling
+        const statusDot = document.getElementById('comfyui-status-dot');
+        const isStable = statusDot.classList.contains('status-running') || 
+                        statusDot.classList.contains('status-stopped');
+        
+        if (isStable || pollCount >= maxPolls) {
+            clearInterval(comfyuiRefreshInterval);
+            comfyuiRefreshInterval = null;
+            stopLogsPolling();
+        }
+    }, 5000);
+}
+
+// Logs functionality
+let logsVisible = false;
+let logsPollingInterval = null;
+
+function toggleLogs() {
+    const container = document.getElementById('comfyui-logs-container');
+    logsVisible = !logsVisible;
+    
+    if (logsVisible) {
+        container.classList.remove('hidden');
+        refreshLogs();
+    } else {
+        container.classList.add('hidden');
+        stopLogsPolling();
+    }
+}
+
+function showLogs() {
+    const container = document.getElementById('comfyui-logs-container');
+    logsVisible = true;
+    container.classList.remove('hidden');
+    refreshLogs();
+}
+
+async function refreshLogs() {
+    try {
+        const response = await fetch('/comfyui/logs?lines=150');
+        if (!response.ok) {
+            throw new Error('Failed to get logs');
+        }
+        
+        const data = await response.json();
+        const logsElement = document.getElementById('comfyui-logs');
+        
+        if (data.success && data.logs) {
+            logsElement.textContent = data.logs || '(No logs available yet)';
+        } else {
+            logsElement.textContent = data.message || '(Container not running)';
+        }
+        
+        // Auto-scroll if enabled
+        const autoScroll = document.getElementById('logs-autoscroll');
+        if (autoScroll && autoScroll.checked) {
+            // Because of mockup-code container
+            const container = logsElement.parentElement;
+            container.scrollTop = container.scrollHeight;
+        }
+    } catch (err) {
+        document.getElementById('comfyui-logs').textContent = 'Error fetching logs: ' + err.message;
+    }
+}
+
+function startLogsPolling() {
+    if (logsPollingInterval) {
+        clearInterval(logsPollingInterval);
+    }
+    
+    // Poll logs every 2 seconds
+    logsPollingInterval = setInterval(() => {
+        if (logsVisible) {
+            refreshLogs();
+        }
+    }, 2000);
+}
+
+function stopLogsPolling() {
+    if (logsPollingInterval) {
+        clearInterval(logsPollingInterval);
+        logsPollingInterval = null;
+    }
+}
+
+// Initialize ComfyUI status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    refreshComfyuiStatus();
+});
+
+async function createJob(type) {
+    try {
+        const response = await fetch('/jobs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({type: type})
+        });
+        
+        if (response.ok) {
+            const job = await response.json();
+            // Use trendy toast via creating element if needed, or just alert for now since we don't have a toast function exposed
+            // But base.html has toast checking logic for flash messages.
+            alert(`Job #${job.id} created! Cost: ${job.cost_rcc} RCC`);
+            window.location.reload();
+        } else {
+            const error = await response.json();
+            alert(error.detail || 'Failed to create job');
+        }
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+async function buyPack(packId) {
+    try {
+        const response = await fetch('/checkout/topup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({pack_id: packId})
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            window.location.href = data.checkout_url;
+        } else {
+            const error = await response.json();
+            alert(error.detail || 'Failed to create checkout');
+        }
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+</script>
+{% endblock %}
