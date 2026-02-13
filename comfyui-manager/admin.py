@@ -43,26 +43,26 @@ active_downloads: Dict[str, Dict[str, Any]] = {}
 
 # ComfyUI model types and their folders
 MODEL_TYPES = {
-    "checkpoints": "Checkpoints (SD models)",
+    "checkpoints": "Checkpoints",
     "vae": "VAE",
     "loras": "LoRAs",
-    "controlnet": "ControlNet / T2I Adapters",
-    "clip": "CLIP / Text Encoders",
+    "controlnet": "ControlNet",
+    "clip": "CLIP",
     "clip_vision": "CLIP Vision",
-    "diffusion_models": "Diffusion Models (UNET)",
-    "text_encoders": "Text Encoders",
+    "diffusion_models": "Diffusion",
+    "text_encoders": "Text Enc.",
     "unet": "UNET",
-    "upscale_models": "Upscale Models",
-    "embeddings": "Embeddings / Textual Inversion",
-    "hypernetworks": "Hypernetworks",
-    "style_models": "Style Models",
+    "upscale_models": "Upscale",
+    "embeddings": "Embeddings",
+    "hypernetworks": "Hypernets",
+    "style_models": "Style",
     "gligen": "GLIGEN",
-    "audio_encoders": "Audio Encoders",
+    "audio_encoders": "Audio Enc.",
     "diffusers": "Diffusers",
     "vae_approx": "VAE Approx",
-    "latent_upscale_models": "Latent Upscale Models",
+    "latent_upscale_models": "Latent Upscale",
     "photomaker": "PhotoMaker",
-    "model_patches": "Model Patches",
+    "model_patches": "Patches",
 }
 
 
