@@ -160,6 +160,20 @@ def init_sqlite_db():
             )
         """)
         
+        # App Settings table (key-value store for runtime configuration)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Insert default settings if not exists
+        cursor.execute("""
+            INSERT OR IGNORE INTO app_settings (key, value) VALUES ('comfyui_public_port', '8188')
+        """)
+        
         # Create indexes for better performance
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_jobs_user_id ON jobs(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status)")
@@ -577,6 +591,51 @@ class Database:
                         (limit, offset)
                     )
                 return [dict(row) for row in cursor.fetchall()]
+    
+    # -------------------- App Settings --------------------
+    
+    async def get_setting(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        """Get an application setting by key"""
+        if self.use_supabase:
+            result = supabase.table("app_settings").select("value").eq("key", key).execute()
+            if result.data:
+                return result.data[0]["value"]
+            return default
+        else:
+            with get_sqlite_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT value FROM app_settings WHERE key = ?", (key,))
+                row = cursor.fetchone()
+                return row["value"] if row else default
+    
+    async def set_setting(self, key: str, value: str) -> bool:
+        """Set an application setting (upsert)"""
+        if self.use_supabase:
+            result = supabase.table("app_settings").upsert({
+                "key": key,
+                "value": value,
+                "updated_at": datetime.utcnow().isoformat()
+            }).execute()
+            return bool(result.data)
+        else:
+            with get_sqlite_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT OR REPLACE INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)",
+                    (key, value, datetime.utcnow().isoformat())
+                )
+                return True
+    
+    async def get_all_settings(self) -> Dict[str, str]:
+        """Get all application settings as a dictionary"""
+        if self.use_supabase:
+            result = supabase.table("app_settings").select("*").execute()
+            return {row["key"]: row["value"] for row in result.data}
+        else:
+            with get_sqlite_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT key, value FROM app_settings")
+                return {row["key"]: row["value"] for row in cursor.fetchall()}
 
 
 # ============================================

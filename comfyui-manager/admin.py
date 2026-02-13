@@ -30,9 +30,11 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 templates = Jinja2Templates(directory="templates")
 
 # Configuration
-# COMFYUI_PORT: The port where ComfyUI is accessible
+# COMFYUI_PORT: The port where ComfyUI is accessible internally
+# COMFYUI_PUBLIC_PORT: The port exposed externally in user-facing URLs
 # COMFYUI_INTERNAL_HOST: Internal hostname for backend health checks (default: localhost)
 COMFYUI_PORT = int(os.getenv("COMFYUI_PORT", "8188"))
+COMFYUI_PUBLIC_PORT = int(os.getenv("COMFYUI_PUBLIC_PORT", os.getenv("COMFYUI_PORT", "8188")))
 COMFYUI_INTERNAL_HOST = os.getenv("COMFYUI_INTERNAL_HOST", "localhost")
 COMFYUI_INTERNAL_URL = f"http://{COMFYUI_INTERNAL_HOST}:{COMFYUI_PORT}"
 MODELS_BASE_PATH = os.getenv("MODELS_PATH", "./storage-models/models")
@@ -742,17 +744,23 @@ async def admin_delete_model(
 # ComfyUI Operations
 # ============================================
 
-def get_comfyui_public_url(request: Request) -> str:
+async def get_comfyui_public_url(request: Request) -> str:
     """Build public ComfyUI URL from request host"""
     # Get the host from the request (e.g., remote.ranchcomputing.com)
     host = request.headers.get("host", "localhost").split(":")[0]
     scheme = request.headers.get("x-forwarded-proto", "http")
-    return f"{scheme}://{host}:{COMFYUI_PORT}"
+    # Get public port from database setting, fallback to env var
+    public_port = await db.get_setting("comfyui_public_port")
+    port = int(public_port) if public_port else COMFYUI_PUBLIC_PORT
+    return f"{scheme}://{host}:{port}"
 
 
 async def get_comfyui_status(request: Request = None) -> dict:
     """Check ComfyUI container/service status"""
-    public_url = get_comfyui_public_url(request) if request else f"http://localhost:{COMFYUI_PORT}"
+    # Get public port from database setting, fallback to env var
+    public_port_str = await db.get_setting("comfyui_public_port") if request else None
+    public_port = int(public_port_str) if public_port_str else COMFYUI_PUBLIC_PORT
+    public_url = await get_comfyui_public_url(request) if request else f"http://localhost:{public_port}"
     
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
@@ -762,7 +770,7 @@ async def get_comfyui_status(request: Request = None) -> dict:
                     "running": True,
                     "url": public_url,
                     "internal_url": COMFYUI_INTERNAL_URL,
-                    "port": COMFYUI_PORT,
+                    "port": public_port,
                     "details": response.json()
                 }
     except:
@@ -772,7 +780,7 @@ async def get_comfyui_status(request: Request = None) -> dict:
         "running": False,
         "url": public_url,
         "internal_url": COMFYUI_INTERNAL_URL,
-        "port": COMFYUI_PORT,
+        "port": public_port,
         "details": None
     }
 
@@ -901,4 +909,47 @@ async def admin_restart_comfyui(
             details=str(e),
             status="error"
         )
-        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# Admin Settings
+# ============================================
+
+@router.get("/settings")
+async def get_admin_settings(current_user: dict = Depends(get_current_admin)):
+    """Get all admin settings"""
+    settings = await db.get_all_settings()
+    return {
+        "comfyui_public_port": settings.get("comfyui_public_port", str(COMFYUI_PORT))
+    }
+
+
+@router.post("/settings")
+async def update_admin_settings(
+    request: Request,
+    current_user: dict = Depends(get_current_admin)
+):
+    """Update admin settings"""
+    data = await request.json()
+    
+    # Update ComfyUI public port if provided
+    if "comfyui_public_port" in data:
+        port = str(data["comfyui_public_port"])
+        # Validate port number
+        try:
+            port_num = int(port)
+            if not (1 <= port_num <= 65535):
+                raise ValueError("Port must be between 1 and 65535")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        await db.set_setting("comfyui_public_port", port)
+        
+        await db.add_log(
+            action="settings_update",
+            user_id=current_user["id"],
+            ip=request.client.host if request.client else None,
+            details=f"Updated comfyui_public_port to {port}"
+        )
+    
+    return {"success": True, "message": "Settings updated"}

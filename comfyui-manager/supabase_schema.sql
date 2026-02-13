@@ -110,6 +110,19 @@ CREATE INDEX IF NOT EXISTS idx_logs_action ON logs(action);
 CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at);
 
 -- =============================================
+-- App Settings Table (Key-Value Store)
+-- =============================================
+CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert default settings
+INSERT INTO app_settings (key, value) VALUES ('comfyui_public_port', '8188')
+ON CONFLICT (key) DO NOTHING;
+
+-- =============================================
 -- Views for Common Queries
 -- =============================================
 

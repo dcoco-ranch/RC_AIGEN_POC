@@ -152,6 +152,24 @@
                 </a>
                 {% endif %}
             </div>
+            
+            <!-- ComfyUI Access Configuration -->
+            <div class="mt-4 pt-4 border-t border-base-content/10">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <label class="text-sm text-base-content/60">Public Port (exposed to users):</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="comfyui-public-port" value="{{ comfyui_status.port }}" min="1" max="65535" class="input input-bordered input-sm w-24" />
+                        <button class="btn btn-primary btn-sm" onclick="savePublicPort()">
+                            Save
+                        </button>
+                        <span id="port-save-status" class="text-xs text-success hidden">✓ Saved</span>
+                    </div>
+                </div>
+                <p class="text-xs text-base-content/40 mt-2">Set the external port that users should use to access ComfyUI (e.g., if exposed via reverse proxy on a different port).</p>
+            </div>
         </div>
 
         <!-- Two Column Grid -->
@@ -260,6 +278,35 @@ async function controlComfyUI(action) {
         alert('Error: ' + err.message);
         btn.disabled = false;
         btn.innerHTML = originalText;
+    }
+}
+
+async function savePublicPort() {
+    const portInput = document.getElementById('comfyui-public-port');
+    const statusEl = document.getElementById('port-save-status');
+    const port = parseInt(portInput.value, 10);
+    
+    if (isNaN(port) || port < 1 || port > 65535) {
+        alert('Port must be a number between 1 and 65535');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/settings', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({comfyui_public_port: port})
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            statusEl.classList.remove('hidden');
+            setTimeout(() => statusEl.classList.add('hidden'), 3000);
+        } else {
+            alert('Failed to save: ' + (data.detail || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Error: ' + err.message);
     }
 }
 

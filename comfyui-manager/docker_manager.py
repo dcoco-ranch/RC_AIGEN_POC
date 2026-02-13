@@ -28,6 +28,7 @@ STARTUP_LOG_FILE = LOGS_DIR / "comfyui_startup.log"
 
 # Configuration from environment
 COMFYUI_PORT = int(os.getenv("COMFYUI_PORT", "8188"))
+COMFYUI_PUBLIC_PORT = int(os.getenv("COMFYUI_PUBLIC_PORT", os.getenv("COMFYUI_PORT", "8188")))
 COMFYUI_INTERNAL_HOST = os.getenv("COMFYUI_INTERNAL_HOST", "localhost")
 
 # Container configuration (matches docker-compose-comfyui.yml)
@@ -214,7 +215,7 @@ class DockerManager:
             # Get port if running (URL will be built by the caller based on request host)
             extra_info = {}
             if status == ContainerStatus.RUNNING:
-                extra_info["port"] = COMFYUI_PORT
+                extra_info["port"] = COMFYUI_PUBLIC_PORT  # External port for user-facing URLs
                 extra_info["internal_url"] = f"http://{COMFYUI_INTERNAL_HOST}:{COMFYUI_PORT}"
             
             return {

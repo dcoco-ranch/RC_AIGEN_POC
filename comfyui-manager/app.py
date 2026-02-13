@@ -577,6 +577,10 @@ async def comfyui_status(request: Request, current_user: dict = Depends(get_curr
     if status.get("port"):
         host = request.headers.get("host", "localhost").split(":")[0]
         scheme = request.headers.get("x-forwarded-proto", "http")
+        # Get public port from database setting, fallback to env var, then internal port
+        public_port = await db.get_setting("comfyui_public_port")
+        if public_port:
+            status["port"] = int(public_port)
         status["url"] = f"{scheme}://{host}:{status['port']}"
     
     return status
