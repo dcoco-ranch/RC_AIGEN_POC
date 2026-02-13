@@ -17,11 +17,18 @@ from datetime import datetime
 
 import docker
 from docker.errors import NotFound, APIError, ImageNotFound
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Get the directory for logs
 BASE_DIR = Path(os.environ.get('COMPOSE_PROJECT_DIR', Path(__file__).resolve().parent))
 LOGS_DIR = BASE_DIR / "logs"
 STARTUP_LOG_FILE = LOGS_DIR / "comfyui_startup.log"
+
+# Configuration from environment
+COMFYUI_PORT = int(os.getenv("COMFYUI_PORT", "8188"))
+COMFYUI_INTERNAL_HOST = os.getenv("COMFYUI_INTERNAL_HOST", "localhost")
 
 # Container configuration (matches docker-compose-comfyui.yml)
 CONTAINER_NAME = "comfyui"
@@ -34,7 +41,7 @@ STORAGE_USER_DIR = BASE_DIR / "storage-user"
 CONTAINER_CONFIG = {
     "image": IMAGE_NAME,
     "name": CONTAINER_NAME,
-    "ports": {"8188/tcp": 8188},
+    "ports": {"8188/tcp": COMFYUI_PORT},
     "environment": {"CLI_ARGS": ""},
     "volumes": {
         "comfyui-storage": {"bind": "/root", "mode": "rw"},
@@ -55,7 +62,7 @@ CONTAINER_CONFIG = {
         )
     ],
     "healthcheck": {
-        "test": ["CMD", "curl", "-f", "http://localhost:8188"],
+        "test": ["CMD", "curl", "-f", f"http://localhost:8188"],
         "interval": 30000000000,  # 30s in nanoseconds
         "timeout": 10000000000,   # 10s
         "retries": 5,
@@ -204,10 +211,11 @@ class DockerManager:
                 status = ContainerStatus.STOPPED
                 message = f"Container status: {container_status}"
             
-            # Get URL if running
+            # Get port if running (URL will be built by the caller based on request host)
             extra_info = {}
             if status == ContainerStatus.RUNNING:
-                extra_info["url"] = "http://localhost:8188"
+                extra_info["port"] = COMFYUI_PORT
+                extra_info["internal_url"] = f"http://{COMFYUI_INTERNAL_HOST}:{COMFYUI_PORT}"
             
             return {
                 "status": status,

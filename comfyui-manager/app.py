@@ -569,9 +569,16 @@ async def get_stripe_key():
 # ============================================
 
 @app.get("/comfyui/status")
-async def comfyui_status(current_user: dict = Depends(get_current_user)):
+async def comfyui_status(request: Request, current_user: dict = Depends(get_current_user)):
     """Get ComfyUI container status (requires authentication)"""
     status = await docker_manager.get_status()
+    
+    # Build public URL from request host if running
+    if status.get("port"):
+        host = request.headers.get("host", "localhost").split(":")[0]
+        scheme = request.headers.get("x-forwarded-proto", "http")
+        status["url"] = f"{scheme}://{host}:{status['port']}"
+    
     return status
 
 
