@@ -240,9 +240,30 @@ async def dev_admin_login():
         return response
     except Exception as e:
         import traceback
+        error_trace = traceback.format_exc()
         print(f"Dev admin login error: {e}")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Dev admin login failed: {str(e)}")
+        print(error_trace)
+        # In DEBUG mode, show full error in response
+        return HTMLResponse(
+            content=f"""
+            <html>
+            <head><title>Dev Admin Login Error</title></head>
+            <body style="font-family: monospace; padding: 20px;">
+                <h1>Dev Admin Login Error</h1>
+                <p><strong>Error:</strong> {str(e)}</p>
+                <h2>Traceback:</h2>
+                <pre style="background: #f0f0f0; padding: 15px; overflow-x: auto;">{error_trace}</pre>
+                <h2>Debug Info:</h2>
+                <ul>
+                    <li>SUPABASE_URL set: {bool(os.getenv('SUPABASE_URL'))}</li>
+                    <li>SUPABASE_KEY set: {bool(os.getenv('SUPABASE_KEY'))}</li>
+                    <li>Database mode: {'Supabase' if db.use_supabase else 'SQLite'}</li>
+                </ul>
+            </body>
+            </html>
+            """,
+            status_code=500
+        )
 
 
 @app.get("/auth/gitlab/callback")
