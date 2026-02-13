@@ -25,7 +25,8 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
       # ComfyUI connection (via Docker network)
-      - COMFYUI_URL=http://comfyui:8188
+      - COMFYUI_PORT=${COMFYUI_PORT:-8188}
+      - COMFYUI_INTERNAL_HOST=comfyui
       # Docker management - HOST_PROJECT_DIR is the absolute path on the Docker host
       - DOCKER_HOST=unix:///var/run/docker.sock
       - HOST_PROJECT_DIR=${HOST_PROJECT_DIR:-/host/comfyui-manager}

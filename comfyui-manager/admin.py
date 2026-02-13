@@ -30,7 +30,11 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 templates = Jinja2Templates(directory="templates")
 
 # Configuration
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+# COMFYUI_PORT: The port where ComfyUI is accessible
+# COMFYUI_INTERNAL_HOST: Internal hostname for backend health checks (default: localhost)
+COMFYUI_PORT = int(os.getenv("COMFYUI_PORT", "8188"))
+COMFYUI_INTERNAL_HOST = os.getenv("COMFYUI_INTERNAL_HOST", "localhost")
+COMFYUI_INTERNAL_URL = f"http://{COMFYUI_INTERNAL_HOST}:{COMFYUI_PORT}"
 MODELS_BASE_PATH = os.getenv("MODELS_PATH", "./storage-models/models")
 
 # Active downloads tracking (in-memory state)
@@ -91,7 +95,7 @@ async def admin_dashboard(request: Request, current_user: dict = Depends(get_cur
     recent_logs = await db.get_logs(limit=10)
     
     # ComfyUI status
-    comfyui_status = await get_comfyui_status()
+    comfyui_status = await get_comfyui_status(request)
     
     return templates.TemplateResponse("admin/dashboard.html", {
         "request": request,
@@ -738,15 +742,27 @@ async def admin_delete_model(
 # ComfyUI Operations
 # ============================================
 
-async def get_comfyui_status() -> dict:
+def get_comfyui_public_url(request: Request) -> str:
+    """Build public ComfyUI URL from request host"""
+    # Get the host from the request (e.g., remote.ranchcomputing.com)
+    host = request.headers.get("host", "localhost").split(":")[0]
+    scheme = request.headers.get("x-forwarded-proto", "http")
+    return f"{scheme}://{host}:{COMFYUI_PORT}"
+
+
+async def get_comfyui_status(request: Request = None) -> dict:
     """Check ComfyUI container/service status"""
+    public_url = get_comfyui_public_url(request) if request else f"http://localhost:{COMFYUI_PORT}"
+    
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{COMFYUI_URL}/system_stats")
+            response = await client.get(f"{COMFYUI_INTERNAL_URL}/system_stats")
             if response.status_code == 200:
                 return {
                     "running": True,
-                    "url": COMFYUI_URL,
+                    "url": public_url,
+                    "internal_url": COMFYUI_INTERNAL_URL,
+                    "port": COMFYUI_PORT,
                     "details": response.json()
                 }
     except:
@@ -754,15 +770,17 @@ async def get_comfyui_status() -> dict:
     
     return {
         "running": False,
-        "url": COMFYUI_URL,
+        "url": public_url,
+        "internal_url": COMFYUI_INTERNAL_URL,
+        "port": COMFYUI_PORT,
         "details": None
     }
 
 
 @router.get("/comfyui/status")
-async def admin_comfyui_status(current_user: dict = Depends(get_current_admin)):
+async def admin_comfyui_status(request: Request, current_user: dict = Depends(get_current_admin)):
     """Get ComfyUI status"""
-    return await get_comfyui_status()
+    return await get_comfyui_status(request)
 
 
 @router.post("/comfyui/start")
