@@ -25,7 +25,7 @@ This POC demonstrates a hybrid monetization model for ComfyUI:
 │  • RCC Wallet & Ledger                                      │
 │  • Stripe Integration                                       │
 │  • Admin Dashboard                                          │
-│                      Port 8000                              │
+│                      Port 8730                              │
 └─────────────────────────┬───────────────────────────────────┘
                           │ Docker Network
 ┌─────────────────────────▼───────────────────────────────────┐

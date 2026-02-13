@@ -27,7 +27,7 @@ echo.
 echo ===========================================
 echo Stack started successfully!
 echo.
-echo Portal:   http://localhost:8000
+echo Portal:   http://localhost:8730
 echo ComfyUI:  http://localhost:8188
 echo ===========================================
 echo.

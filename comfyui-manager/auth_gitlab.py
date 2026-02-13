@@ -20,7 +20,7 @@ load_dotenv()
 # GitLab OAuth Configuration
 GITLAB_CLIENT_ID = os.getenv("GITLAB_CLIENT_ID")
 GITLAB_CLIENT_SECRET = os.getenv("GITLAB_CLIENT_SECRET")
-GITLAB_REDIRECT_URI = os.getenv("GITLAB_REDIRECT_URI", "http://localhost:8000/auth/gitlab/callback")
+GITLAB_REDIRECT_URI = os.getenv("GITLAB_REDIRECT_URI", "http://localhost:8730/auth/gitlab/callback")
 
 # GitLab OAuth URLs (for gitlab.com - change for self-hosted)
 GITLAB_BASE_URL = os.getenv("GITLAB_BASE_URL", "https://gitlab.com")

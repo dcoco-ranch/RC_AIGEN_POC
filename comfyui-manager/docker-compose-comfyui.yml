@@ -8,15 +8,15 @@ services:
     volumes:
       # Root storage for ComfyUI internals
       - comfyui-storage:/root
-      # Models (local directory bind mount)
-      - ./storage-models/models:/root/ComfyUI/models
-      # Cache directories (local directory bind mounts)
-      - ./storage-models/hf-hub:/root/.cache/huggingface/hub
-      - ./storage-models/torch-hub:/root/.cache/torch/hub
+      # Models (absolute host path via env var, fallback to relative for direct use)
+      - ${HOST_PROJECT_DIR:-.}/storage-models/models:/root/ComfyUI/models
+      # Cache directories
+      - ${HOST_PROJECT_DIR:-.}/storage-models/hf-hub:/root/.cache/huggingface/hub
+      - ${HOST_PROJECT_DIR:-.}/storage-models/torch-hub:/root/.cache/torch/hub
       # User data
-      - ./storage-user/input:/root/ComfyUI/input
-      - ./storage-user/output:/root/ComfyUI/output
-      - ./storage-user/workflows:/root/ComfyUI/user/default/workflows
+      - ${HOST_PROJECT_DIR:-.}/storage-user/input:/root/ComfyUI/input
+      - ${HOST_PROJECT_DIR:-.}/storage-user/output:/root/ComfyUI/output
+      - ${HOST_PROJECT_DIR:-.}/storage-user/workflows:/root/ComfyUI/user/default/workflows
     environment:
       - CLI_ARGS=
     security_opt:

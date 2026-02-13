@@ -120,12 +120,12 @@
                 </div>
                 <div class="flex items-center gap-2">
                     {% if comfyui_status.running %}
-                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/20 text-success text-sm font-medium">
+                    <span class="comfyui-status-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/20 text-success text-sm font-medium">
                         <span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>
                         Running
                     </span>
                     {% else %}
-                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-error/20 text-error text-sm font-medium">
+                    <span class="comfyui-status-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-error/20 text-error text-sm font-medium">
                         <span class="w-2 h-2 rounded-full bg-error"></span>
                         Stopped
                     </span>
@@ -239,18 +239,46 @@
 async function controlComfyUI(action) {
     if (!confirm(`Are you sure you want to ${action} ComfyUI?`)) return;
     
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Working...';
+    
     try {
         const response = await fetch(`/admin/comfyui/${action}`, {method: 'POST'});
         const data = await response.json();
         
         if (data.success) {
-            window.location.reload();
+            // Wait a moment for Docker to update state, then reload
+            setTimeout(() => window.location.reload(), 2000);
         } else {
-            alert(`Failed: ${data.output}`);
+            alert(`Failed: ${data.output || 'Unknown error'}`);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     } catch (err) {
         alert('Error: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
+
+// Auto-refresh status every 30 seconds
+setInterval(async () => {
+    try {
+        const response = await fetch('/admin/comfyui/status');
+        const status = await response.json();
+        const badge = document.querySelector('.comfyui-status-badge');
+        if (badge) {
+            if (status.running) {
+                badge.className = 'comfyui-status-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/20 text-success text-sm font-medium';
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>Running';
+            } else {
+                badge.className = 'comfyui-status-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-error/20 text-error text-sm font-medium';
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-error"></span>Stopped';
+            }
+        }
+    } catch (e) {}
+}, 30000);
 </script>
 {% endblock %}

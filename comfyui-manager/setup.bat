@@ -33,10 +33,10 @@ echo ====================================
 echo.
 echo Next steps:
 echo 1. Edit .env with your Supabase, Stripe, and GitLab credentials
-echo 2. Start the portal: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+echo 2. Start the portal: uvicorn app:app --host 0.0.0.0 --port 8730 --reload
 echo 3. Start ComfyUI: docker-compose up -d comfyui
 echo.
-echo Access the portal at: http://localhost:8000
+echo Access the portal at: http://localhost:8730
 echo.
 
 pause

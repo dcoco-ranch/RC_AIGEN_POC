@@ -16,7 +16,7 @@ services:
       - GITLAB_BASE_URL=${GITLAB_BASE_URL:-https://gitlab.com}
       - GITLAB_CLIENT_ID=${GITLAB_CLIENT_ID:-}
       - GITLAB_CLIENT_SECRET=${GITLAB_CLIENT_SECRET:-}
-      - GITLAB_REDIRECT_URI=${GITLAB_REDIRECT_URI:-http://localhost:8000/auth/gitlab/callback}
+      - GITLAB_REDIRECT_URI=${GITLAB_REDIRECT_URI:-http://localhost:8730/auth/gitlab/callback}
       # Admin access control
       - ADMIN_ALLOWED_EMAILS=${ADMIN_ALLOWED_EMAILS:-}
       - ADMIN_ALLOWED_DOMAINS=${ADMIN_ALLOWED_DOMAINS:-}
@@ -26,11 +26,12 @@ services:
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
       # ComfyUI connection (via Docker network)
       - COMFYUI_URL=http://comfyui:8188
-      # Docker management
+      # Docker management - HOST_PROJECT_DIR is the absolute path on the Docker host
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOST_PROJECT_DIR=${HOST_PROJECT_DIR:-/host/comfyui-manager}
       - COMPOSE_PROJECT_DIR=/app
     ports:
-      - "8000:8000"
+      - "8730:8000"
     volumes:
       # Docker socket for managing ComfyUI container
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -42,9 +43,8 @@ services:
       # Development: Mount UI files for hot-reloading
       - ./templates:/app/templates
       - ./static:/app/static
-      # ComfyUI shared volumes (for model management from portal)
-      - comfyui-storage:/comfyui/storage
-      - comfyui-models:/comfyui/models
+      # Shared models directory (same as ComfyUI container)
+      - ./storage-models/models:/app/storage-models/models
     networks:
       - comfyui-network
     restart: unless-stopped
@@ -60,10 +60,6 @@ volumes:
     name: comfyui-portal-data
   portal-logs:
     name: comfyui-portal-logs
-  comfyui-storage:
-    name: comfyui-storage
-  comfyui-models:
-    name: comfyui-models
 
 networks:
   comfyui-network:

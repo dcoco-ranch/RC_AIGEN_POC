@@ -39,7 +39,7 @@ A complete solution for hosting and monetizing ComfyUI with Docker, featuring:
 3. **Start the portal:**
 
    ```powershell
-   uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+   uvicorn app:app --host 0.0.0.0 --port 8730 --reload
    ```
 
 4. **Start ComfyUI (optional - requires GPU):**
@@ -49,7 +49,7 @@ A complete solution for hosting and monetizing ComfyUI with Docker, featuring:
    ```
 
 5. **Access:**
-   - Portal: <http://localhost:8000>
+   - Portal: <http://localhost:8730>
    - ComfyUI: <http://localhost:8188>
 
 ### Docker Deployment (Production)
@@ -75,7 +75,7 @@ Both the Portal and ComfyUI run in separate containers for isolation and securit
    ```
 
 4. **Access:**
-   - Portal: <http://localhost:8000>
+   - Portal: <http://localhost:8730>
    - ComfyUI: <http://localhost:8188>
 
 5. **View logs:**
@@ -130,7 +130,7 @@ For self-hosted GitLab (e.g., `gitlab.ranchcomputing.com`):
 1. Go to your GitLab instance: `https://gitlab.ranchcomputing.com/-/profile/applications`
 2. Create a new application:
    - Name: `ComfyUI Manager`
-   - Redirect URI: `http://localhost:8000/auth/gitlab/callback`
+   - Redirect URI: `http://localhost:8730/auth/gitlab/callback`
    - Scopes: `read_user`
 3. Copy the Application ID and Secret to `.env`
 4. Set `GITLAB_BASE_URL=https://gitlab.ranchcomputing.com` in `.env`
