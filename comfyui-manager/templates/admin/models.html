@@ -55,42 +55,73 @@
         <!-- Install New Model -->
         <div class="glass-card rounded-xl p-6 mb-6">
             <h2 class="text-lg font-semibold text-base-content mb-4">Install New Model</h2>
-            <form action="/admin/models/install" method="post" class="space-y-4">
+            <form id="install-form" class="space-y-4">
                 <div class="grid md:grid-cols-4 gap-4">
-                    <div class="md:col-span-3">
+                    <div class="md:col-span-2">
                         <label class="label"><span class="label-text">Model URL</span></label>
                         <input type="url" id="url" name="url" required 
                                placeholder="https://huggingface.co/author/model/resolve/main/model.safetensors"
                                class="input input-bordered w-full">
                     </div>
                     <div>
+                        <label class="label"><span class="label-text">Model Type</span></label>
+                        <select name="model_type" id="model_type" class="select select-bordered w-full" required>
+                            {% for type_key, type_label in model_types.items() %}
+                            <option value="{{ type_key }}" {% if type_key == 'checkpoints' %}selected{% endif %}>{{ type_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
                         <label class="label"><span class="label-text">Filename (optional)</span></label>
-                        <input type="text" name="filename" placeholder="model.safetensors"
+                        <input type="text" id="filename" name="filename" placeholder="model.safetensors"
                                class="input input-bordered w-full">
                     </div>
                 </div>
+                
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-base-content/60">
-                        <span class="font-medium">Path:</span> {{ models_path }}<br>
-                        <span class="font-medium">Formats:</span> .safetensors, .ckpt, .pt, .pth
+                        <span class="font-medium">Base Path:</span> {{ models_path }}/<span id="selected_type">checkpoints</span><br>
+                        <span class="font-medium">Formats:</span> .safetensors, .ckpt, .pt, .pth, .bin
                     </div>
-                    <button type="submit" class="btn btn-primary gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Download & Install
+                    <button type="submit" id="submit-btn" class="btn btn-primary gap-2">
+                        <svg id="download-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span id="btn-text">Download & Install</span>
                     </button>
                 </div>
             </form>
         </div>
+        
+        <!-- Active Downloads Section -->
+        <div id="active-downloads" class="glass-card rounded-xl p-6 mb-6 hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-base-content">Active Downloads</h2>
+                <span id="downloads-count" class="badge badge-primary">0</span>
+            </div>
+            <div id="downloads-list" class="space-y-4">
+                <!-- Downloads will be inserted here dynamically -->
+            </div>
+        </div>
 
         <!-- Installed Models -->
         <div class="glass-card rounded-xl p-6 mb-6">
-            <h2 class="text-lg font-semibold text-base-content mb-4">Installed Models ({{ models|length }})</h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-base-content">Installed Models ({{ models|length }})</h2>
+                <div class="flex gap-2">
+                    <select id="type_filter" onchange="filterByType()" class="select select-bordered select-sm">
+                        <option value="">All Types</option>
+                        {% for type_key, type_label in model_types.items() %}
+                        <option value="{{ type_key }}" {% if type_filter == type_key %}selected{% endif %}>{{ type_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
             {% if models %}
             <div class="overflow-x-auto">
                 <table class="table">
                     <thead>
                         <tr class="bg-base-200/50">
                             <th class="text-base-content/60">Name</th>
+                            <th class="text-base-content/60">Type</th>
                             <th class="text-base-content/60">Size</th>
                             <th class="text-base-content/60">Added</th>
                             <th class="text-base-content/60">Actions</th>
@@ -107,10 +138,11 @@
                                     <span class="font-medium">{{ model.name }}</span>
                                 </div>
                             </td>
+                            <td><span class="badge badge-outline badge-sm">{{ model.type_label }}</span></td>
                             <td class="text-sm">{{ model.size_mb }} MB</td>
                             <td class="text-sm text-base-content/60">{{ model.created_at }}</td>
                             <td>
-                                <form action="/admin/models/{{ model.name }}/delete" method="post" class="inline">
+                                <form action="/admin/models/{{ model.type }}/{{ model.name }}/delete" method="post" class="inline">
                                     <button type="submit" class="btn btn-ghost btn-sm text-error hover:bg-error/20"
                                             onclick="return confirm('Delete {{ model.name }}?')">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -134,22 +166,22 @@
         <!-- Popular Models -->
         <div class="glass-card rounded-xl p-6">
             <h2 class="text-lg font-semibold text-base-content mb-2">Popular Models</h2>
-            <p class="text-sm text-base-content/60 mb-4">Click to copy URL to the form above</p>
+            <p class="text-sm text-base-content/60 mb-4">Click to copy URL and set model type</p>
             <div class="grid md:grid-cols-3 gap-4">
-                <button onclick="copyModelUrl('https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors')" 
+                <button onclick="copyModelUrl('https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors', 'checkpoints')" 
                         class="text-left p-4 rounded-lg border border-base-content/10 hover:border-primary/50 hover:bg-primary/5 transition-all">
                     <h3 class="font-medium text-base-content">Stable Diffusion v1.5</h3>
-                    <p class="text-sm text-base-content/60">General purpose image generation</p>
+                    <p class="text-sm text-base-content/60">Checkpoint - General purpose</p>
                 </button>
-                <button onclick="copyModelUrl('https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors')"
+                <button onclick="copyModelUrl('https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors', 'checkpoints')"
                         class="text-left p-4 rounded-lg border border-base-content/10 hover:border-primary/50 hover:bg-primary/5 transition-all">
                     <h3 class="font-medium text-base-content">SDXL Base 1.0</h3>
-                    <p class="text-sm text-base-content/60">High resolution image generation</p>
+                    <p class="text-sm text-base-content/60">Checkpoint - High resolution</p>
                 </button>
-                <button onclick="copyModelUrl('https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/sd_xl_refiner_1.0.safetensors')"
+                <button onclick="copyModelUrl('https://huggingface.co/stabilityai/sdxl-vae/resolve/main/sdxl_vae.safetensors', 'vae')"
                         class="text-left p-4 rounded-lg border border-base-content/10 hover:border-primary/50 hover:bg-primary/5 transition-all">
-                    <h3 class="font-medium text-base-content">SDXL Refiner 1.0</h3>
-                    <p class="text-sm text-base-content/60">Image refinement model</p>
+                    <h3 class="font-medium text-base-content">SDXL VAE</h3>
+                    <p class="text-sm text-base-content/60">VAE - Better color reproduction</p>
                 </button>
             </div>
         </div>
@@ -157,9 +189,231 @@
 </div>
 
 <script>
-function copyModelUrl(url) {
+// Track active SSE connections
+const activeStreams = {};
+
+function copyModelUrl(url, modelType) {
     document.getElementById('url').value = url;
+    if (modelType) {
+        document.getElementById('model_type').value = modelType;
+        document.getElementById('selected_type').textContent = modelType;
+    }
     navigator.clipboard.writeText(url);
 }
+
+document.getElementById('model_type').addEventListener('change', function() {
+    document.getElementById('selected_type').textContent = this.value;
+});
+
+function filterByType() {
+    const type = document.getElementById('type_filter').value;
+    if (type) {
+        window.location.href = `/admin/models?type_filter=${type}`;
+    } else {
+        window.location.href = '/admin/models';
+    }
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatSpeed(bytesPerSec) {
+    if (!bytesPerSec || bytesPerSec === 0) return '';
+    const k = 1024;
+    const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+    const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+    return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function getStatusBadge(status) {
+    switch(status) {
+        case 'starting': return '<span class="badge badge-info badge-sm">Starting</span>';
+        case 'downloading': return '<span class="badge badge-primary badge-sm">Downloading</span>';
+        case 'complete': return '<span class="badge badge-success badge-sm">Complete</span>';
+        case 'error': return '<span class="badge badge-error badge-sm">Error</span>';
+        case 'cancelled': return '<span class="badge badge-warning badge-sm">Cancelled</span>';
+        default: return '<span class="badge badge-ghost badge-sm">' + status + '</span>';
+    }
+}
+
+function getProgressClass(status) {
+    switch(status) {
+        case 'complete': return 'progress-success';
+        case 'error': return 'progress-error';
+        case 'cancelled': return 'progress-warning';
+        default: return 'progress-primary';
+    }
+}
+
+function renderDownloadItem(download) {
+    const isActive = ['starting', 'downloading'].includes(download.status);
+    const speedText = isActive && download.speed ? formatSpeed(download.speed) : '';
+    return `
+        <div id="download-${download.id}" class="p-4 rounded-lg border border-base-content/10 bg-base-200/30">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="font-medium text-sm text-base-content">${download.filename}</span>
+                    ${getStatusBadge(download.status)}
+                </div>
+                <div class="flex items-center gap-2">
+                    ${speedText ? `<span class="text-sm text-primary font-medium">${speedText}</span>` : ''}
+                    <span class="text-sm text-base-content/60">${download.progress}%</span>
+                    ${isActive ? `<button onclick="cancelDownload('${download.id}')" class="btn btn-ghost btn-xs text-error">Cancel</button>` : ''}
+                </div>
+            </div>
+            <progress class="progress ${getProgressClass(download.status)} w-full" value="${download.progress}" max="100"></progress>
+            <div class="flex justify-between mt-1">
+                <span class="text-xs text-base-content/60">${download.model_type}</span>
+                <span class="text-xs text-base-content/60">${download.total > 0 ? formatBytes(download.downloaded) + ' / ' + formatBytes(download.total) : ''}</span>
+            </div>
+            ${download.error ? `<div class="text-xs text-error mt-1">${download.error}</div>` : ''}
+        </div>
+    `;
+}
+
+function updateDownloadsUI(downloads) {
+    const container = document.getElementById('active-downloads');
+    const list = document.getElementById('downloads-list');
+    const count = document.getElementById('downloads-count');
+    
+    const activeDownloads = downloads.filter(d => ['starting', 'downloading'].includes(d.status));
+    const recentDownloads = downloads.filter(d => !['starting', 'downloading'].includes(d.status)).slice(0, 3);
+    const allToShow = [...activeDownloads, ...recentDownloads];
+    
+    if (allToShow.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    container.classList.remove('hidden');
+    count.textContent = activeDownloads.length;
+    list.innerHTML = allToShow.map(renderDownloadItem).join('');
+    
+    // Start SSE streams for active downloads
+    activeDownloads.forEach(d => {
+        if (!activeStreams[d.id]) {
+            startDownloadStream(d.id);
+        }
+    });
+}
+
+function startDownloadStream(downloadId) {
+    if (activeStreams[downloadId]) return;
+    
+    const eventSource = new EventSource(`/admin/models/downloads/${downloadId}/stream`);
+    activeStreams[downloadId] = eventSource;
+    
+    eventSource.addEventListener('progress', function(e) {
+        const data = JSON.parse(e.data);
+        
+        // Update the specific download item
+        const el = document.getElementById(`download-${downloadId}`);
+        if (el) {
+            el.outerHTML = renderDownloadItem(data);
+        }
+        
+        if (['complete', 'error', 'cancelled', 'not_found'].includes(data.status)) {
+            eventSource.close();
+            delete activeStreams[downloadId];
+            
+            // Reload page after completion to show new model
+            if (data.status === 'complete') {
+                setTimeout(() => window.location.reload(), 1500);
+            }
+        }
+    });
+    
+    eventSource.onerror = function() {
+        eventSource.close();
+        delete activeStreams[downloadId];
+    };
+}
+
+async function cancelDownload(downloadId) {
+    if (!confirm('Cancel this download?')) return;
+    
+    try {
+        await fetch(`/admin/models/downloads/${downloadId}`, { method: 'DELETE' });
+        loadActiveDownloads();
+    } catch (e) {
+        console.error('Failed to cancel download:', e);
+    }
+}
+
+async function loadActiveDownloads() {
+    try {
+        const response = await fetch('/admin/models/downloads');
+        const data = await response.json();
+        updateDownloadsUI(data.downloads || []);
+    } catch (e) {
+        console.error('Failed to load downloads:', e);
+    }
+}
+
+// Form submission
+document.getElementById('install-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const url = document.getElementById('url').value;
+    const modelType = document.getElementById('model_type').value;
+    const filename = document.getElementById('filename').value;
+    
+    if (!url) {
+        alert('Please enter a model URL');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const downloadIcon = document.getElementById('download-icon');
+    
+    submitBtn.disabled = true;
+    downloadIcon.classList.add('hidden');
+    btnText.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Starting...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('url', url);
+        formData.append('model_type', modelType);
+        if (filename) formData.append('filename', filename);
+        
+        const response = await fetch('/admin/models/install/start', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to start download');
+        }
+        
+        const result = await response.json();
+        
+        // Clear form
+        document.getElementById('url').value = '';
+        document.getElementById('filename').value = '';
+        
+        // Load downloads and start streaming
+        await loadActiveDownloads();
+        
+    } catch (e) {
+        alert('Error: ' + e.message);
+    } finally {
+        submitBtn.disabled = false;
+        downloadIcon.classList.remove('hidden');
+        btnText.textContent = 'Download & Install';
+    }
+});
+
+// Check for active downloads on page load
+loadActiveDownloads();
+
+// Periodically refresh downloads status
+setInterval(loadActiveDownloads, 10000);
 </script>
 {% endblock %}
