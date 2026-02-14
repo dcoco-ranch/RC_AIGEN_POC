@@ -137,6 +137,25 @@
             
             <!-- Body -->
             <div class="p-6">
+                <!-- No Credits Warning -->
+                {% if balance <= 0 %}
+                <div class="alert bg-warning/10 border border-warning/30 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-warning shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <h3 class="font-bold text-warning">No Credits Available</h3>
+                        <p class="text-sm opacity-70">You need RCC credits to use ComfyUI. Please top up your balance to start generating.</p>
+                    </div>
+                    <button class="btn btn-warning btn-sm gap-1" onclick="buyPack('starter_pack')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Buy Credits
+                    </button>
+                </div>
+                {% endif %}
+                
                 <!-- Status Messages -->
                 <div id="comfyui-message" class="alert shadow-lg mb-4 hidden border-0"></div>
                 
@@ -272,6 +291,7 @@
                         </svg>
                     </div>
                     <h4 class="font-semibold opacity-70">No activity yet</h4>
+                    {% if balance > 0 %}
                     <p class="text-sm opacity-50 mt-1">Start your ComfyUI workspace and create your first generation job.</p>
                     <button class="btn btn-primary btn-sm mt-4 gap-2" onclick="comfyuiAction('start')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -279,6 +299,15 @@
                         </svg>
                         Get Started
                     </button>
+                    {% else %}
+                    <p class="text-sm opacity-50 mt-1">Top up your credits to start generating with ComfyUI.</p>
+                    <button class="btn btn-warning btn-sm mt-4 gap-2" onclick="buyPack('starter_pack')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Buy Credits
+                    </button>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
@@ -298,7 +327,7 @@
                 </h3>
             </div>
             <div class="p-4 space-y-3">
-                <button class="w-full btn btn-ghost justify-start gap-4 h-auto py-4 hover:bg-primary/10 group border border-base-content/5 hover:border-primary/30 transition-all" onclick="createJob('IMAGE_TASK')">
+                <button class="w-full btn btn-ghost justify-start gap-4 h-auto py-4 hover:bg-primary/10 group border border-base-content/5 hover:border-primary/30 transition-all {{ 'btn-disabled opacity-50' if balance <= 0 else '' }}" onclick="createJob('IMAGE_TASK')" {% if balance <= 0 %}disabled{% endif %} title="{{ 'No credits - Please top up first' if balance <= 0 else 'Create a new image task' }}">
                     <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                         🖼️
                     </div>
@@ -309,7 +338,7 @@
                     <div class="badge badge-primary badge-outline badge-sm">{{ credit_pricing.IMAGE_TASK.cost }} RCC</div>
                 </button>
                 
-                <button class="w-full btn btn-ghost justify-start gap-4 h-auto py-4 hover:bg-secondary/10 group border border-base-content/5 hover:border-secondary/30 transition-all" onclick="createJob('VIDEO_TASK')">
+                <button class="w-full btn btn-ghost justify-start gap-4 h-auto py-4 hover:bg-secondary/10 group border border-base-content/5 hover:border-secondary/30 transition-all {{ 'btn-disabled opacity-50' if balance <= 0 else '' }}" onclick="createJob('VIDEO_TASK')" {% if balance <= 0 %}disabled{% endif %} title="{{ 'No credits - Please top up first' if balance <= 0 else 'Create a new video task' }}">
                     <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                         🎬
                     </div>
@@ -320,7 +349,13 @@
                     <div class="badge badge-secondary badge-outline badge-sm">{{ credit_pricing.VIDEO_TASK.cost }} RCC</div>
                 </button>
             </div>
-            {% if credit_pricing.charge_mode == 'on_completion' %}
+            {% if balance <= 0 %}
+            <div class="px-4 pb-4">
+                <div class="text-xs text-center text-warning bg-warning/10 rounded-lg py-2 border border-warning/20">
+                    ⚠️ No credits - <a href="#" onclick="buyPack('starter_pack')" class="underline font-bold">Top up now</a> to create tasks
+                </div>
+            </div>
+            {% elif credit_pricing.charge_mode == 'on_completion' %}
             <div class="px-4 pb-4">
                 <div class="text-xs text-center opacity-50 bg-base-200/30 rounded-lg py-2">
                     ⚡ Credits charged on task completion
@@ -409,6 +444,8 @@
 <script>
 // ComfyUI Service Control
 let comfyuiRefreshInterval = null;
+const userBalance = {{ balance }};
+const hasCredits = userBalance > 0;
 
 async function refreshComfyuiStatus() {
     try {
@@ -434,6 +471,15 @@ function updateComfyuiUI(data) {
     statusDot.className = 'status-dot';
     statusBadge.className = 'flex items-center gap-2 px-4 py-2 rounded-full border';
     
+    // Update button titles based on credit status
+    if (!hasCredits) {
+        btnStart.title = 'No credits available - Please top up to start';
+        btnRestart.title = 'No credits available - Please top up to restart';
+    } else {
+        btnStart.title = 'Start ComfyUI workspace';
+        btnRestart.title = 'Restart ComfyUI workspace';
+    }
+    
     switch (data.status) {
         case 'running':
             statusDot.classList.add('status-running');
@@ -442,7 +488,7 @@ function updateComfyuiUI(data) {
             statusBadge.classList.add('bg-success/10', 'border-success/20');
             btnStart.disabled = true;
             btnStop.disabled = false;
-            btnRestart.disabled = false;
+            btnRestart.disabled = !hasCredits; // Only allow restart if has credits
             if (data.url) {
                 urlDiv.classList.remove('hidden');
                 urlLink.href = data.url;
@@ -451,10 +497,10 @@ function updateComfyuiUI(data) {
         case 'stopped':
         case 'not_found':
             statusDot.classList.add('status-stopped');
-            statusText.textContent = 'Stopped';
+            statusText.textContent = hasCredits ? 'Stopped' : 'Stopped (No Credits)';
             statusText.className = 'text-sm font-medium opacity-50';
             statusBadge.classList.add('bg-base-200/50', 'border-base-content/10');
-            btnStart.disabled = false;
+            btnStart.disabled = !hasCredits; // Only allow start if has credits
             btnStop.disabled = true;
             btnRestart.disabled = true;
             urlDiv.classList.add('hidden');
@@ -484,15 +530,24 @@ function updateComfyuiUI(data) {
             statusText.textContent = data.message || 'Error';
             statusText.className = 'text-sm font-medium text-error';
             statusBadge.classList.add('bg-error/10', 'border-error/20');
-            btnStart.disabled = false;
+            btnStart.disabled = !hasCredits;
             btnStop.disabled = false;
-            btnRestart.disabled = false;
+            btnRestart.disabled = !hasCredits;
             urlDiv.classList.add('hidden');
     }
 }
 
 async function comfyuiAction(action) {
     const messageDiv = document.getElementById('comfyui-message');
+    
+    // Check credits for start/restart actions
+    if ((action === 'start' || action === 'restart') && !hasCredits) {
+        messageDiv.classList.remove('hidden');
+        messageDiv.className = 'alert bg-warning/10 border border-warning/20 text-warning mb-4';
+        messageDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg> No credits available. Please <a href="#" onclick="buyPack('starter_pack')" class="underline font-bold">buy credits</a> to use ComfyUI.`;
+        setTimeout(() => messageDiv.classList.add('hidden'), 8000);
+        return;
+    }
     
     try {
         document.getElementById('btn-start').disabled = true;
@@ -606,6 +661,12 @@ function stopLogsPolling() {
 document.addEventListener('DOMContentLoaded', refreshComfyuiStatus);
 
 async function createJob(type) {
+    // Check credits first
+    if (!hasCredits) {
+        showToast('No credits available. Please buy credits to create jobs.', 'warning');
+        return;
+    }
+    
     try {
         const response = await fetch('/jobs', {
             method: 'POST',

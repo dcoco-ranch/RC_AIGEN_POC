@@ -178,6 +178,26 @@ async def login_form(
         details=f"User login: {user['email']}"
     )
     
+    # Check balance and stop ComfyUI service if empty (to avoid resource usage without credits)
+    user_balance = await get_balance(user["id"])
+    if user_balance <= 0:
+        try:
+            status = await docker_manager.get_status()
+            if status.get("status") == "running":
+                await docker_manager.stop()
+                await db.add_log(
+                    action="comfyui_auto_stop",
+                    user_id=user["id"],
+                    details=f"ComfyUI stopped on login - no credits available"
+                )
+        except Exception as e:
+            # Log but don't block login
+            await db.add_log(
+                action="comfyui_auto_stop_failed",
+                user_id=user["id"],
+                details=f"Failed to auto-stop ComfyUI: {str(e)}"
+            )
+    
     # Redirect with cookie
     response = RedirectResponse(url="/dashboard", status_code=303)
     response.set_cookie(
@@ -762,7 +782,21 @@ async def comfyui_status(request: Request, current_user: dict = Depends(get_curr
 
 @app.post("/comfyui/start")
 async def comfyui_start(current_user: dict = Depends(get_current_user)):
-    """Start ComfyUI container (requires authentication)"""
+    """Start ComfyUI container (requires authentication and credits)"""
+    # Check if user has credits (admins bypass this check)
+    if not current_user.get("is_admin", False):
+        balance = await get_balance(current_user["id"])
+        if balance <= 0:
+            await db.add_log(
+                action="comfyui_start_blocked",
+                user_id=current_user["id"],
+                details=f"User {current_user['email']} tried to start ComfyUI with no credits"
+            )
+            return {
+                "success": False,
+                "message": "Insufficient credits. Please top up your RCC balance to use ComfyUI."
+            }
+    
     result = await docker_manager.start()
     
     # Log the action
@@ -792,7 +826,21 @@ async def comfyui_stop(current_user: dict = Depends(get_current_user)):
 
 @app.post("/comfyui/restart")
 async def comfyui_restart(current_user: dict = Depends(get_current_user)):
-    """Restart ComfyUI container (requires authentication)"""
+    """Restart ComfyUI container (requires authentication and credits)"""
+    # Check if user has credits (admins bypass this check)
+    if not current_user.get("is_admin", False):
+        balance = await get_balance(current_user["id"])
+        if balance <= 0:
+            await db.add_log(
+                action="comfyui_restart_blocked",
+                user_id=current_user["id"],
+                details=f"User {current_user['email']} tried to restart ComfyUI with no credits"
+            )
+            return {
+                "success": False,
+                "message": "Insufficient credits. Please top up your RCC balance to use ComfyUI."
+            }
+    
     result = await docker_manager.restart()
     
     # Log the action
