@@ -108,13 +108,13 @@
 <body class="min-h-screen bg-base-200 bg-grid flex flex-col">
     
     <!-- Navbar -->
-    <div class="navbar bg-base-100/80 backdrop-blur-lg shadow-lg sticky top-0 z-50 border-b border-base-content/5 px-4 lg:px-8">
+    <div class="navbar bg-slate-100/95 backdrop-blur-lg shadow-lg sticky top-0 z-50 border-b border-slate-200 px-4 lg:px-8">
         <div class="flex-1">
-            <a href="/" class="btn btn-ghost text-xl gap-3 hover:bg-transparent group">
+            <a href="/" class="btn btn-ghost text-xl gap-3 hover:bg-slate-200/50 group">
                 <img src="/static/logo.svg" alt="Ranch Computing" class="h-10 w-auto" loading="eager" decoding="async">
                 <div class="flex flex-col items-start gap-0">
                     <span class="font-bold text-lg gradient-text leading-tight">ComfyUI</span>
-                    <span class="text-[10px] font-semibold opacity-50 tracking-[0.2em] uppercase">Cloud Studio</span>
+                    <span class="text-[10px] font-semibold text-slate-500 tracking-[0.2em] uppercase">Cloud Studio</span>
                 </div>
             </a>
         </div>
@@ -123,22 +123,22 @@
             {% if user %}
                 <!-- Quick Stats -->
                 <div class="hidden md:flex items-center gap-3 mr-2">
-                    <div class="flex items-center gap-2 px-4 py-2 bg-base-200/50 rounded-xl border border-base-content/5">
+                    <div class="flex items-center gap-2 px-4 py-2 bg-white/60 rounded-xl border border-slate-200">
                         <div class="w-2 h-2 rounded-full bg-success animate-pulse"></div>
-                        <span class="text-xs font-medium opacity-70">Online</span>
+                        <span class="text-xs font-medium text-slate-600">Online</span>
                     </div>
-                    <div class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rc-blue/10 to-rc-cyan/10 rounded-xl border border-rc-blue/20">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rc-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span class="font-bold text-sm text-primary">{{ user.rcc_balance|default(0) }}</span>
-                        <span class="text-xs opacity-60">RCC</span>
+                        <span class="font-bold text-sm text-rc-blue">{{ user.rcc_balance|default(0) }}</span>
+                        <span class="text-xs text-slate-500">RCC</span>
                     </div>
                 </div>
                 
                 <!-- Notifications -->
-                <button class="btn btn-ghost btn-circle btn-sm relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button class="btn btn-ghost btn-circle btn-sm relative hover:bg-slate-200/50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                     <span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
@@ -146,17 +146,17 @@
                 
                 <!-- User Menu -->
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost gap-2 pl-2 pr-3 h-12 rounded-xl hover:bg-base-200/50">
+                    <div tabindex="0" role="button" class="btn btn-ghost gap-2 pl-2 pr-3 h-12 rounded-xl hover:bg-slate-200/50">
                         <div class="avatar placeholder">
-                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-rc-blue to-rc-cyan text-white flex items-center justify-center">
                                 <span class="text-sm font-bold">{{ user.email[0]|upper }}</span>
                             </div>
                         </div>
                         <div class="hidden sm:flex flex-col items-start">
-                            <span class="text-sm font-medium leading-tight">{{ user.email.split('@')[0] }}</span>
-                            <span class="text-[10px] opacity-50">{{ 'Admin' if user.is_admin else 'Pro Plan' }}</span>
+                            <span class="text-sm font-medium leading-tight text-slate-700">{{ user.email.split('@')[0] }}</span>
+                            <span class="text-[10px] text-slate-500">{{ 'Admin' if user.is_admin else 'Pro Plan' }}</span>
                         </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </div>
@@ -190,8 +190,8 @@
                 </div>
             {% else %}
                 <div class="flex gap-2">
-                    <a href="/login" class="btn btn-ghost btn-sm">Sign in</a>
-                    <a href="/register" class="btn btn-primary btn-sm shadow-lg shadow-primary/25">Get Started</a>
+                    <a href="/login" class="btn btn-ghost btn-sm text-slate-600 hover:bg-slate-200/50">Sign in</a>
+                    <a href="/register" class="btn btn-primary btn-sm shadow-lg shadow-rc-blue/25">Get Started</a>
                 </div>
             {% endif %}
         </div>
@@ -225,19 +225,19 @@
     </main>
     
     <!-- Footer -->
-    <footer class="footer footer-center p-8 bg-base-300/50 backdrop-blur text-base-content border-t border-base-content/5">
+    <footer class="footer footer-center p-8 bg-slate-100/95 backdrop-blur text-slate-700 border-t border-slate-200">
         <aside class="max-w-md">
             <div class="flex items-center gap-3 mb-3">
                 <img src="/static/logo.svg" alt="Ranch Computing" class="h-8 w-auto">
                 <span class="font-bold gradient-text">ComfyUI Cloud Studio</span>
             </div>
-            <p class="text-sm opacity-60">Professional AI image generation in the cloud. Powered by Ranch Computing infrastructure.</p>
-            <p class="text-xs opacity-40 mt-2">© 2026 Ranch Computing. All rights reserved.</p>
+            <p class="text-sm text-slate-600">Professional AI image generation in the cloud. Powered by Ranch Computing infrastructure.</p>
+            <p class="text-xs text-slate-500 mt-2">© 2026 Ranch Computing. All rights reserved.</p>
             <nav class="flex gap-6 mt-4">
-                <a href="#" class="link link-hover text-xs opacity-60 hover:opacity-100 transition-opacity">Terms of Service</a>
-                <a href="#" class="link link-hover text-xs opacity-60 hover:opacity-100 transition-opacity">Privacy Policy</a>
-                <a href="#" class="link link-hover text-xs opacity-60 hover:opacity-100 transition-opacity">System Status</a>
-                <a href="#" class="link link-hover text-xs opacity-60 hover:opacity-100 transition-opacity">Documentation</a>
+                <a href="#" class="link link-hover text-xs text-slate-500 hover:text-rc-blue transition-colors">Terms of Service</a>
+                <a href="#" class="link link-hover text-xs text-slate-500 hover:text-rc-blue transition-colors">Privacy Policy</a>
+                <a href="#" class="link link-hover text-xs text-slate-500 hover:text-rc-blue transition-colors">System Status</a>
+                <a href="#" class="link link-hover text-xs text-slate-500 hover:text-rc-blue transition-colors">Documentation</a>
             </nav>
         </aside>
     </footer>
