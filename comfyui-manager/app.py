@@ -30,7 +30,9 @@ from auth import (
 from auth_gitlab import gitlab_login, gitlab_callback, gitlab_logout
 from wallet import (
     get_balance, reserve_rcc, release_rcc, get_rcc_history,
-    get_job_cost, get_topup_packs, get_subscription_plans
+    get_job_cost, get_topup_packs, get_subscription_plans,
+    get_credit_pricing, update_credit_pricing, set_charge_mode,
+    process_task_completion, should_charge_on_creation
 )
 from payment import (
     create_topup_checkout, create_subscription_checkout,
@@ -39,7 +41,9 @@ from payment import (
 from schemas import (
     UserCreate, UserLogin, Token, JobCreate, JobResponse,
     RCCBalance, RCCHistory, TopupCheckoutRequest, SubscriptionCheckoutRequest,
-    CheckoutSessionResponse, MessageResponse, MeResponse
+    CheckoutSessionResponse, MessageResponse, MeResponse,
+    CreditPricingConfig, CreditPricingUpdate, ChargeModeUpdate,
+    TaskCompletionRequest, TaskCompletionResponse
 )
 
 # Import admin router
@@ -308,6 +312,22 @@ async def user_dashboard(request: Request, current_user: dict = Depends(get_curr
     jobs = await db.get_user_jobs(user_id, limit=10)
     rcc_history = await get_rcc_history(user_id, limit=10)
     
+    # Get current credit pricing
+    pricing = get_credit_pricing()
+    credit_pricing = {
+        "IMAGE_TASK": {
+            "cost": get_job_cost(JobType.IMAGE_TASK),
+            "base_cost": pricing["IMAGE_TASK"]["base_cost"],
+            "multiplier": pricing["IMAGE_TASK"]["multiplier"]
+        },
+        "VIDEO_TASK": {
+            "cost": get_job_cost(JobType.VIDEO_TASK),
+            "base_cost": pricing["VIDEO_TASK"]["base_cost"],
+            "multiplier": pricing["VIDEO_TASK"]["multiplier"]
+        },
+        "charge_mode": pricing.get("charge_mode", "on_creation")
+    }
+    
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "user": current_user,
@@ -316,7 +336,8 @@ async def user_dashboard(request: Request, current_user: dict = Depends(get_curr
         "jobs": jobs,
         "rcc_history": rcc_history["entries"],
         "topup_packs": get_topup_packs(),
-        "subscription_plans": get_subscription_plans()
+        "subscription_plans": get_subscription_plans(),
+        "credit_pricing": credit_pricing
     })
 
 
@@ -343,6 +364,128 @@ async def get_wallet_history(
 
 
 # ============================================
+# Credit Pricing Routes
+# ============================================
+
+@app.get("/pricing")
+async def get_pricing_config():
+    """
+    Get current credit pricing configuration.
+    Public endpoint - shows how much each task type costs.
+    """
+    pricing = get_credit_pricing()
+    return {
+        "IMAGE_TASK": {
+            "cost": get_job_cost(JobType.IMAGE_TASK),
+            "base_cost": pricing["IMAGE_TASK"]["base_cost"],
+            "multiplier": pricing["IMAGE_TASK"]["multiplier"],
+            "description": pricing["IMAGE_TASK"]["description"]
+        },
+        "VIDEO_TASK": {
+            "cost": get_job_cost(JobType.VIDEO_TASK),
+            "base_cost": pricing["VIDEO_TASK"]["base_cost"],
+            "multiplier": pricing["VIDEO_TASK"]["multiplier"],
+            "description": pricing["VIDEO_TASK"]["description"]
+        },
+        "charge_mode": pricing.get("charge_mode", "on_creation"),
+        "refund_on_failure": pricing.get("refund_on_failure", True)
+    }
+
+
+@app.put("/pricing", dependencies=[Depends(get_current_admin)])
+async def update_pricing_config(
+    update: CreditPricingUpdate,
+    current_user: dict = Depends(get_current_admin)
+):
+    """
+    Update credit pricing for a job type.
+    Admin only - adjusts the cost ratio for completed tasks.
+    """
+    try:
+        updated = update_credit_pricing(
+            job_type=update.job_type,
+            base_cost=update.base_cost,
+            multiplier=update.multiplier,
+            admin_user_id=current_user["id"]
+        )
+        
+        # Log the change
+        await db.add_log(
+            action="pricing_updated",
+            user_id=current_user["id"],
+            details=f"Updated {update.job_type}: base_cost={update.base_cost}, multiplier={update.multiplier}"
+        )
+        
+        return {
+            "success": True,
+            "message": f"Pricing updated for {update.job_type}",
+            "pricing": updated
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.put("/pricing/charge-mode", dependencies=[Depends(get_current_admin)])
+async def update_charge_mode(
+    update: ChargeModeUpdate,
+    current_user: dict = Depends(get_current_admin)
+):
+    """
+    Update when credits are charged (on_creation or on_completion).
+    Admin only.
+    """
+    try:
+        updated = set_charge_mode(update.mode, admin_user_id=current_user["id"])
+        
+        # Log the change
+        await db.add_log(
+            action="charge_mode_updated",
+            user_id=current_user["id"],
+            details=f"Changed charge mode to: {update.mode}"
+        )
+        
+        return {
+            "success": True,
+            "message": f"Charge mode updated to {update.mode}",
+            "pricing": updated
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/tasks/complete", response_model=TaskCompletionResponse)
+async def process_completion(
+    request: TaskCompletionRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Process a task completion and charge credits if configured.
+    
+    This endpoint should be called when a ComfyUI task finishes.
+    If charge_mode is "on_completion", credits will be deducted here.
+    """
+    # Get the job
+    job = await db.get_job(request.job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Check ownership
+    if job["user_id"] != current_user["id"] and not current_user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Process the completion
+    result = await process_task_completion(
+        user_id=job["user_id"],
+        job_id=request.job_id,
+        job_type=JobType(job["type"]),
+        is_admin=job.get("admin_bypass", False),
+        task_success=request.success
+    )
+    
+    return TaskCompletionResponse(**result)
+
+
+# ============================================
 # Job Routes
 # ============================================
 
@@ -354,13 +497,14 @@ async def create_job(
     """
     Create a new compute job.
     - Checks RCC balance (unless admin)
-    - Reserves RCC (debits at creation)
+    - Reserves RCC at creation if charge_mode is "on_creation"
+    - If charge_mode is "on_completion", credits are charged when task completes
     - Returns job details
     """
     user_id = current_user["id"]
     is_admin = current_user.get("is_admin", False)
     
-    # Get job cost
+    # Get job cost (uses base_cost * multiplier)
     cost = get_job_cost(job_data.type)
     
     # Create job record
@@ -375,24 +519,26 @@ async def create_job(
     if not job:
         raise HTTPException(status_code=500, detail="Failed to create job")
     
-    # Reserve RCC (or log admin bypass)
-    try:
-        await reserve_rcc(
-            user_id=user_id,
-            job_id=job["id"],
-            job_type=job_data.type,
-            is_admin=is_admin
-        )
-    except HTTPException as e:
-        # If reservation fails (insufficient balance), delete the job
-        # In a real implementation, you'd use a transaction
-        raise e
+    # Reserve RCC only if charging on creation (or log admin bypass)
+    if should_charge_on_creation():
+        try:
+            await reserve_rcc(
+                user_id=user_id,
+                job_id=job["id"],
+                job_type=job_data.type,
+                is_admin=is_admin
+            )
+        except HTTPException as e:
+            # If reservation fails (insufficient balance), delete the job
+            # In a real implementation, you'd use a transaction
+            raise e
     
     # Log job creation
+    charge_mode = "on_creation" if should_charge_on_creation() else "on_completion"
     await db.add_log(
         action="job_created",
         user_id=user_id,
-        details=f"Job {job['id']}: {job_data.type.value}, Cost: {cost} RCC, Admin: {is_admin}"
+        details=f"Job {job['id']}: {job_data.type.value}, Cost: {cost} RCC, Admin: {is_admin}, ChargeMode: {charge_mode}"
     )
     
     return job
@@ -433,7 +579,8 @@ async def update_job_status(
 ):
     """
     Update job status.
-    If failed, releases (refunds) RCC.
+    - If charge_mode is "on_completion" and status is SUCCEEDED, charges credits
+    - If failed and charge_mode was "on_creation", releases (refunds) RCC.
     """
     job = await db.get_job(job_id)
     
@@ -462,18 +609,45 @@ async def update_job_status(
     # Update job
     updated_job = await db.update_job(job_id, **update_data)
     
-    # If failed, release RCC (refund)
-    if status == JobStatus.FAILED and not job.get("admin_bypass"):
-        await release_rcc(
-            user_id=job["user_id"],
-            job_id=job_id,
-            cost=job["cost_rcc"]
-        )
-        await db.add_log(
-            action="job_failed_refund",
-            user_id=job["user_id"],
-            details=f"Job {job_id} failed, refunded {job['cost_rcc']} RCC"
-        )
+    # Handle credit operations based on job status and charge mode
+    if status == JobStatus.SUCCEEDED and not job.get("admin_bypass"):
+        # If charging on completion, process the charge now
+        if not should_charge_on_creation():
+            try:
+                result = await process_task_completion(
+                    user_id=job["user_id"],
+                    job_id=job_id,
+                    job_type=JobType(job["type"]),
+                    is_admin=job.get("admin_bypass", False),
+                    task_success=True
+                )
+                if result.get("charged"):
+                    await db.add_log(
+                        action="job_completed_charged",
+                        user_id=job["user_id"],
+                        details=f"Job {job_id} completed, charged {result['amount']} RCC"
+                    )
+            except HTTPException as e:
+                # If charging fails, log but don't fail the status update
+                await db.add_log(
+                    action="job_completion_charge_failed",
+                    user_id=job["user_id"],
+                    details=f"Job {job_id} completed but charge failed: {e.detail}"
+                )
+    
+    elif status == JobStatus.FAILED and not job.get("admin_bypass"):
+        # Only refund if we charged on creation
+        if should_charge_on_creation():
+            await release_rcc(
+                user_id=job["user_id"],
+                job_id=job_id,
+                cost=job["cost_rcc"]
+            )
+            await db.add_log(
+                action="job_failed_refund",
+                user_id=job["user_id"],
+                details=f"Job {job_id} failed, refunded {job['cost_rcc']} RCC"
+            )
     
     return updated_job
 

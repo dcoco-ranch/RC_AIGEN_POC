@@ -204,6 +204,55 @@ class CheckoutSessionResponse(BaseModel):
 
 
 # ============================================
+# Credit Pricing Schemas
+# ============================================
+
+class JobTypePricing(BaseModel):
+    """Pricing configuration for a single job type"""
+    base_cost: int = Field(..., ge=0, description="Base RCC cost for this job type")
+    multiplier: float = Field(..., ge=0, description="Multiplier applied to base cost (e.g., 1.5 means 50% more)")
+    description: Optional[str] = None
+
+
+class CreditPricingConfig(BaseModel):
+    """Full credit pricing configuration"""
+    IMAGE_TASK: JobTypePricing
+    VIDEO_TASK: JobTypePricing
+    charge_mode: str = Field("on_creation", description="When to charge: 'on_creation' or 'on_completion'")
+    refund_on_failure: bool = True
+    updated_at: Optional[str] = None
+    updated_by: Optional[int] = None
+
+
+class CreditPricingUpdate(BaseModel):
+    """Request to update credit pricing for a job type"""
+    job_type: str = Field(..., description="Job type to update: 'IMAGE_TASK' or 'VIDEO_TASK'")
+    base_cost: Optional[int] = Field(None, ge=0, description="New base RCC cost")
+    multiplier: Optional[float] = Field(None, ge=0, description="New multiplier ratio")
+
+
+class ChargeModeUpdate(BaseModel):
+    """Request to update the charge mode"""
+    mode: str = Field(..., description="Charge mode: 'on_creation' or 'on_completion'")
+
+
+class TaskCompletionRequest(BaseModel):
+    """Request to process task completion for credit charging"""
+    job_id: int
+    success: bool = True
+
+
+class TaskCompletionResponse(BaseModel):
+    """Response from task completion processing"""
+    charged: bool
+    amount: int
+    balance: int
+    job_id: int
+    charge_mode: str
+    error: Optional[str] = None
+
+
+# ============================================
 # Log Schemas
 # ============================================
 

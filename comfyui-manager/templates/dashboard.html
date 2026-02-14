@@ -306,7 +306,7 @@
                         <p class="font-semibold">Image Generation</p>
                         <p class="text-xs opacity-50">Create stunning AI images</p>
                     </div>
-                    <div class="badge badge-primary badge-outline badge-sm">1 RCC</div>
+                    <div class="badge badge-primary badge-outline badge-sm">{{ credit_pricing.IMAGE_TASK.cost }} RCC</div>
                 </button>
                 
                 <button class="w-full btn btn-ghost justify-start gap-4 h-auto py-4 hover:bg-secondary/10 group border border-base-content/5 hover:border-secondary/30 transition-all" onclick="createJob('VIDEO_TASK')">
@@ -317,9 +317,16 @@
                         <p class="font-semibold">Video Generation</p>
                         <p class="text-xs opacity-50">Animate your creations</p>
                     </div>
-                    <div class="badge badge-secondary badge-outline badge-sm">5 RCC</div>
+                    <div class="badge badge-secondary badge-outline badge-sm">{{ credit_pricing.VIDEO_TASK.cost }} RCC</div>
                 </button>
             </div>
+            {% if credit_pricing.charge_mode == 'on_completion' %}
+            <div class="px-4 pb-4">
+                <div class="text-xs text-center opacity-50 bg-base-200/30 rounded-lg py-2">
+                    ⚡ Credits charged on task completion
+                </div>
+            </div>
+            {% endif %}
         </div>
         
         <!-- Top Up Credits -->
