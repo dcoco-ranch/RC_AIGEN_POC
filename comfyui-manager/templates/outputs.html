@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Outputs - ComfyUI Cloud Studio{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <nav class="text-sm breadcrumbs mb-2">
+                <ul>
+                    <li><a href="/dashboard" class="opacity-60 hover:opacity-100">Dashboard</a></li>
+                    <li><span id="breadcrumb-path" class="font-medium">Outputs</span></li>
+                </ul>
+            </nav>
+            <h1 class="text-3xl font-bold tracking-tight">Browse <span class="gradient-text">Outputs</span></h1>
+            <p class="text-sm opacity-60 mt-1">View and download your generated images, videos, and 3D models.</p>
+        </div>
+        <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm gap-2" onclick="refreshFiles()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toolbar -->
+<div class="glass-card rounded-2xl p-4 mb-6">
+    <div class="flex flex-wrap items-center gap-4">
+        <!-- Back Button -->
+        <button id="btn-back" class="btn btn-ghost btn-sm gap-2 hidden" onclick="goBack()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+        </button>
+        
+        <!-- Filter by type -->
+        <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost btn-sm gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span id="filter-label">All Files</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </label>
+            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-xl w-44 border border-base-content/10">
+                <li><a onclick="setFilter(null)" class="gap-2">🗂️ All Files</a></li>
+                <li><a onclick="setFilter('image')" class="gap-2">🖼️ Images</a></li>
+                <li><a onclick="setFilter('video')" class="gap-2">🎬 Videos</a></li>
+                <li><a onclick="setFilter('mesh')" class="gap-2">🎲 3D Models</a></li>
+                <li><a onclick="setFilter('audio')" class="gap-2">🎵 Audio</a></li>
+            </ul>
+        </div>
+        
+        <!-- Sort -->
+        <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost btn-sm gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                </svg>
+                <span id="sort-label">Newest First</span>
+            </label>
+            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-xl w-44 border border-base-content/10">
+                <li><a onclick="setSort('modified', true)">Newest First</a></li>
+                <li><a onclick="setSort('modified', false)">Oldest First</a></li>
+                <li><a onclick="setSort('name', false)">Name A-Z</a></li>
+                <li><a onclick="setSort('name', true)">Name Z-A</a></li>
+                <li><a onclick="setSort('size', true)">Largest First</a></li>
+                <li><a onclick="setSort('size', false)">Smallest First</a></li>
+            </ul>
+        </div>
+        
+        <div class="flex-grow"></div>
+        
+        <!-- Stats -->
+        <div class="text-sm opacity-60">
+            <span id="file-count">0</span> files
+        </div>
+    </div>
+</div>
+
+<!-- Files Grid -->
+<div id="files-container" class="min-h-[400px]">
+    <!-- Loading State -->
+    <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+        <p class="mt-4 opacity-60">Loading files...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20">
+        <div class="w-20 h-20 rounded-2xl bg-base-200/50 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <h3 class="font-semibold opacity-70 text-lg">No outputs yet</h3>
+        <p class="text-sm opacity-50 mt-1">Generate some content with ComfyUI to see it here.</p>
+        <a href="/dashboard" class="btn btn-primary btn-sm mt-4 gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Go to Dashboard
+        </a>
+    </div>
+    
+    <!-- Files Grid -->
+    <div id="files-grid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <!-- Files will be inserted here -->
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<dialog id="preview-modal" class="modal">
+    <div class="modal-box max-w-5xl bg-base-200 p-0 overflow-hidden">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-base-content/10">
+            <h3 id="preview-title" class="font-bold text-lg truncate"></h3>
+            <div class="flex items-center gap-2">
+                <a id="preview-download" href="#" download class="btn btn-primary btn-sm gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download
+                </a>
+                <button class="btn btn-ghost btn-sm btn-circle" onclick="document.getElementById('preview-modal').close()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div id="preview-content" class="flex items-center justify-center min-h-[300px] max-h-[70vh] overflow-auto bg-base-300">
+            <!-- Image Preview -->
+            <img id="preview-image" class="hidden max-w-full max-h-[70vh] object-contain" alt="Preview">
+            
+            <!-- Video Preview -->
+            <video id="preview-video" class="hidden max-w-full max-h-[70vh]" controls preload="metadata">
+                <source id="preview-video-source" src="" type="">
+                Your browser does not support video playback.
+            </video>
+            
+            <!-- 3D/Mesh Preview (placeholder) -->
+            <div id="preview-mesh" class="hidden flex flex-col items-center justify-center p-8">
+                <div class="w-24 h-24 rounded-2xl bg-base-200 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                </div>
+                <p class="text-sm opacity-60">3D model preview not available</p>
+                <p class="text-xs opacity-40 mt-1">Download the file to view in a 3D application</p>
+            </div>
+            
+            <!-- Audio Preview -->
+            <div id="preview-audio" class="hidden flex flex-col items-center justify-center p-8 w-full">
+                <div class="w-24 h-24 rounded-2xl bg-base-200 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                </div>
+                <audio id="preview-audio-player" controls class="w-full max-w-md">
+                    <source id="preview-audio-source" src="" type="">
+                </audio>
+            </div>
+            
+            <!-- Other Preview -->
+            <div id="preview-other" class="hidden flex flex-col items-center justify-center p-8">
+                <div class="w-24 h-24 rounded-2xl bg-base-200 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <p class="text-sm opacity-60">Preview not available for this file type</p>
+            </div>
+        </div>
+        
+        <!-- Footer Info -->
+        <div class="flex items-center justify-between p-4 border-t border-base-content/10 text-sm opacity-60">
+            <span id="preview-info"></span>
+            <button class="btn btn-ghost btn-xs text-error" onclick="confirmDelete()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<!-- Delete Confirmation Modal -->
+<dialog id="delete-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-error">Delete File</h3>
+        <p class="py-4">Are you sure you want to delete <span id="delete-filename" class="font-mono"></span>?</p>
+        <p class="text-sm opacity-60">This action cannot be undone.</p>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn btn-ghost">Cancel</button>
+            </form>
+            <button class="btn btn-error" onclick="deleteFile()">Delete</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+// State
+let currentPath = '';
+let currentFilter = null;
+let currentSort = 'modified';
+let currentSortDesc = true;
+let currentFile = null;
+
+// Icons for file types
+const TYPE_ICONS = {
+    'image': '🖼️',
+    'video': '🎬',
+    'mesh': '🎲',
+    'audio': '🎵',
+    'other': '📄'
+};
+
+const TYPE_COLORS = {
+    'image': 'primary',
+    'video': 'secondary',
+    'mesh': 'warning',
+    'audio': 'info',
+    'other': 'ghost'
+};
+
+// Load files
+async function loadFiles() {
+    const loadingState = document.getElementById('loading-state');
+    const emptyState = document.getElementById('empty-state');
+    const filesGrid = document.getElementById('files-grid');
+    
+    loadingState.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    filesGrid.classList.add('hidden');
+    
+    try {
+        const params = new URLSearchParams({
+            folder: currentPath,
+            sort_by: currentSort,
+            sort_desc: currentSortDesc
+        });
+        if (currentFilter) params.set('file_type', currentFilter);
+        
+        const response = await fetch(`/api/outputs?${params}`);
+        const data = await response.json();
+        
+        loadingState.classList.add('hidden');
+        
+        // Update breadcrumb
+        updateBreadcrumb(data.current_path);
+        
+        // Update back button
+        const btnBack = document.getElementById('btn-back');
+        if (data.current_path) {
+            btnBack.classList.remove('hidden');
+        } else {
+            btnBack.classList.add('hidden');
+        }
+        
+        // Check if empty
+        if (data.files.length === 0 && data.folders.length === 0) {
+            emptyState.classList.remove('hidden');
+            document.getElementById('file-count').textContent = '0';
+            return;
+        }
+        
+        // Render files
+        filesGrid.innerHTML = '';
+        
+        // Add folders first
+        data.folders.forEach(folder => {
+            filesGrid.appendChild(createFolderCard(folder));
+        });
+        
+        // Add files
+        data.files.forEach(file => {
+            filesGrid.appendChild(createFileCard(file));
+        });
+        
+        document.getElementById('file-count').textContent = data.files.length;
+        filesGrid.classList.remove('hidden');
+        
+    } catch (err) {
+        loadingState.classList.add('hidden');
+        showToast('Failed to load files: ' + err.message, 'error');
+    }
+}
+
+function createFolderCard(folder) {
+    const card = document.createElement('div');
+    card.className = 'glass-card rounded-xl overflow-hidden cursor-pointer hover:border-primary/30 transition-all group';
+    card.onclick = () => openFolder(folder.path);
+    
+    card.innerHTML = `
+        <div class="aspect-square bg-base-200/50 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-warning opacity-60 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+        </div>
+        <div class="p-3">
+            <p class="font-medium text-sm truncate" title="${folder.name}">${folder.name}</p>
+            <p class="text-xs opacity-50">Folder</p>
+        </div>
+    `;
+    
+    return card;
+}
+
+function createFileCard(file) {
+    const card = document.createElement('div');
+    card.className = 'glass-card rounded-xl overflow-hidden cursor-pointer hover:border-primary/30 transition-all group';
+    card.onclick = () => openPreview(file);
+    
+    const thumbnailUrl = `/api/outputs/thumbnail/${encodeURIComponent(file.path)}`;
+    const typeColor = TYPE_COLORS[file.type] || 'ghost';
+    
+    card.innerHTML = `
+        <div class="aspect-square bg-base-200/50 relative overflow-hidden">
+            <img 
+                src="${thumbnailUrl}" 
+                alt="${file.name}"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23374151%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2240%22>${TYPE_ICONS[file.type]}</text></svg>'"
+            >
+            ${file.type === 'video' ? `
+            <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-colors">
+                <div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </div>
+            </div>
+            ` : ''}
+            <div class="absolute top-2 right-2">
+                <span class="badge badge-${typeColor} badge-sm">${TYPE_ICONS[file.type]}</span>
+            </div>
+        </div>
+        <div class="p-3">
+            <p class="font-medium text-sm truncate" title="${file.name}">${file.name}</p>
+            <div class="flex items-center justify-between mt-1">
+                <p class="text-xs opacity-50">${file.size_human}</p>
+                <p class="text-xs opacity-40">${file.modified_human}</p>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function updateBreadcrumb(path) {
+    const breadcrumb = document.getElementById('breadcrumb-path');
+    if (!path) {
+        breadcrumb.textContent = 'Outputs';
+    } else {
+        breadcrumb.textContent = 'Outputs / ' + path.replace(/\//g, ' / ');
+    }
+}
+
+function openFolder(path) {
+    currentPath = path;
+    loadFiles();
+}
+
+function goBack() {
+    if (currentPath) {
+        const parts = currentPath.split('/');
+        parts.pop();
+        currentPath = parts.join('/');
+        loadFiles();
+    }
+}
+
+function setFilter(type) {
+    currentFilter = type;
+    const labels = {
+        null: 'All Files',
+        'image': '🖼️ Images',
+        'video': '🎬 Videos',
+        'mesh': '🎲 3D Models',
+        'audio': '🎵 Audio'
+    };
+    document.getElementById('filter-label').textContent = labels[type] || 'All Files';
+    loadFiles();
+}
+
+function setSort(sortBy, desc) {
+    currentSort = sortBy;
+    currentSortDesc = desc;
+    const labels = {
+        'modified-true': 'Newest First',
+        'modified-false': 'Oldest First',
+        'name-false': 'Name A-Z',
+        'name-true': 'Name Z-A',
+        'size-true': 'Largest First',
+        'size-false': 'Smallest First'
+    };
+    document.getElementById('sort-label').textContent = labels[`${sortBy}-${desc}`] || 'Sort';
+    loadFiles();
+}
+
+function refreshFiles() {
+    loadFiles();
+}
+
+function openPreview(file) {
+    currentFile = file;
+    
+    const modal = document.getElementById('preview-modal');
+    const title = document.getElementById('preview-title');
+    const download = document.getElementById('preview-download');
+    const info = document.getElementById('preview-info');
+    
+    // Hide all preview types
+    document.querySelectorAll('#preview-content > *').forEach(el => el.classList.add('hidden'));
+    
+    title.textContent = file.name;
+    download.href = `/api/outputs/file/${encodeURIComponent(file.path)}?download=true`;
+    info.textContent = `${file.size_human} • ${file.modified_human} • ${file.extension}`;
+    
+    const fileUrl = `/api/outputs/file/${encodeURIComponent(file.path)}`;
+    
+    switch(file.type) {
+        case 'image':
+            const img = document.getElementById('preview-image');
+            img.src = fileUrl;
+            img.classList.remove('hidden');
+            break;
+            
+        case 'video':
+            const video = document.getElementById('preview-video');
+            const videoSource = document.getElementById('preview-video-source');
+            videoSource.src = fileUrl;
+            videoSource.type = getMimeType(file.extension);
+            video.load();
+            video.classList.remove('hidden');
+            break;
+            
+        case 'audio':
+            const audioPlayer = document.getElementById('preview-audio-player');
+            const audioSource = document.getElementById('preview-audio-source');
+            audioSource.src = fileUrl;
+            audioSource.type = getMimeType(file.extension);
+            audioPlayer.load();
+            document.getElementById('preview-audio').classList.remove('hidden');
+            break;
+            
+        case 'mesh':
+            document.getElementById('preview-mesh').classList.remove('hidden');
+            break;
+            
+        default:
+            document.getElementById('preview-other').classList.remove('hidden');
+    }
+    
+    modal.showModal();
+}
+
+function getMimeType(ext) {
+    const mimeTypes = {
+        '.mp4': 'video/mp4',
+        '.webm': 'video/webm',
+        '.mov': 'video/quicktime',
+        '.avi': 'video/x-msvideo',
+        '.mkv': 'video/x-matroska',
+        '.mp3': 'audio/mpeg',
+        '.wav': 'audio/wav',
+        '.ogg': 'audio/ogg',
+        '.flac': 'audio/flac'
+    };
+    return mimeTypes[ext.toLowerCase()] || 'application/octet-stream';
+}
+
+function confirmDelete() {
+    if (!currentFile) return;
+    document.getElementById('delete-filename').textContent = currentFile.name;
+    document.getElementById('delete-modal').showModal();
+}
+
+async function deleteFile() {
+    if (!currentFile) return;
+    
+    try {
+        const response = await fetch(`/api/outputs/file/${encodeURIComponent(currentFile.path)}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('File deleted successfully', 'success');
+            document.getElementById('preview-modal').close();
+            document.getElementById('delete-modal').close();
+            loadFiles();
+        } else {
+            showToast(data.message || 'Failed to delete', 'error');
+        }
+    } catch (err) {
+        showToast('Failed to delete: ' + err.message, 'error');
+    }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} shadow-2xl border border-${type}/20 slide-up fixed top-4 right-4 z-[200] max-w-sm`;
+    toast.innerHTML = `
+        <span class="text-sm">${message}</span>
+        <button onclick="this.parentElement.remove()" class="btn btn-ghost btn-xs btn-circle">✕</button>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.transition = 'all 0.3s ease-out';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', loadFiles);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('preview-modal').open) {
+        // Stop video/audio when closing
+        document.getElementById('preview-video').pause();
+        document.getElementById('preview-audio-player').pause();
+    }
+});
+</script>
+{% endblock %}

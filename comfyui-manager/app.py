@@ -4,15 +4,19 @@ Portal for ComfyUI SaaS with RCC monetization
 """
 
 import os
+import io
+import mimetypes
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 from pathlib import Path
 
 # Get the directory where this file is located
 BASE_DIR = Path(__file__).resolve().parent
+OUTPUT_DIR = BASE_DIR / "storage-user" / "output"
+THUMBNAIL_DIR = BASE_DIR / "storage-user" / ".thumbnails"
 
 from fastapi import FastAPI, Request, Depends, HTTPException, status, Form
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordRequestForm
@@ -885,6 +889,304 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0"
     }
+
+
+# ============================================
+# Output Browser Routes
+# ============================================
+
+# Supported file extensions by category
+IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'}
+VIDEO_EXTENSIONS = {'.mp4', '.webm', '.mov', '.avi', '.mkv'}
+MESH_EXTENSIONS = {'.obj', '.glb', '.gltf', '.fbx', '.stl'}
+AUDIO_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.flac'}
+
+def get_file_type(filename: str) -> str:
+    """Determine file type from extension"""
+    ext = Path(filename).suffix.lower()
+    if ext in IMAGE_EXTENSIONS:
+        return "image"
+    elif ext in VIDEO_EXTENSIONS:
+        return "video"
+    elif ext in MESH_EXTENSIONS:
+        return "mesh"
+    elif ext in AUDIO_EXTENSIONS:
+        return "audio"
+    return "other"
+
+
+def get_file_info(file_path: Path) -> dict:
+    """Get file information for the browser"""
+    stat = file_path.stat()
+    file_type = get_file_type(file_path.name)
+    
+    return {
+        "name": file_path.name,
+        "path": str(file_path.relative_to(OUTPUT_DIR)),
+        "type": file_type,
+        "size": stat.st_size,
+        "size_human": format_file_size(stat.st_size),
+        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+        "modified_human": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M"),
+        "extension": file_path.suffix.lower()
+    }
+
+
+def format_file_size(size_bytes: int) -> str:
+    """Format file size in human readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.1f} TB"
+
+
+def ensure_thumbnail_dir():
+    """Ensure thumbnail directory exists"""
+    THUMBNAIL_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def generate_image_thumbnail(source_path: Path, thumb_path: Path, size: tuple = (256, 256)):
+    """Generate thumbnail for an image"""
+    try:
+        from PIL import Image
+        with Image.open(source_path) as img:
+            img.thumbnail(size, Image.Resampling.LANCZOS)
+            # Convert to RGB if necessary (for PNG with transparency)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                background = Image.new('RGB', img.size, (30, 30, 30))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            img.save(thumb_path, "JPEG", quality=85)
+        return True
+    except Exception as e:
+        print(f"Thumbnail generation failed for {source_path}: {e}")
+        return False
+
+
+def generate_video_thumbnail(source_path: Path, thumb_path: Path, size: tuple = (256, 256)):
+    """Generate thumbnail for a video (first frame)"""
+    try:
+        import subprocess
+        # Use ffmpeg to extract first frame
+        temp_frame = thumb_path.with_suffix('.temp.png')
+        result = subprocess.run([
+            'ffmpeg', '-y', '-i', str(source_path),
+            '-vf', f'thumbnail,scale={size[0]}:{size[1]}:force_original_aspect_ratio=decrease',
+            '-frames:v', '1',
+            str(temp_frame)
+        ], capture_output=True, timeout=30)
+        
+        if temp_frame.exists():
+            # Convert to JPEG
+            from PIL import Image
+            with Image.open(temp_frame) as img:
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                img.save(thumb_path, "JPEG", quality=85)
+            temp_frame.unlink()
+            return True
+    except Exception as e:
+        print(f"Video thumbnail generation failed for {source_path}: {e}")
+    return False
+
+
+@app.get("/outputs", response_class=HTMLResponse)
+async def outputs_page(
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    """Output browser page"""
+    balance = await get_balance(current_user["id"])
+    
+    return templates.TemplateResponse("outputs.html", {
+        "request": request,
+        "user": current_user,
+        "messages": [],
+        "balance": balance
+    })
+
+
+@app.get("/api/outputs")
+async def list_outputs(
+    current_user: dict = Depends(get_current_user),
+    folder: str = "",
+    file_type: Optional[str] = None,
+    sort_by: str = "modified",
+    sort_desc: bool = True
+):
+    """List output files with optional filtering"""
+    if not OUTPUT_DIR.exists():
+        return {"files": [], "folders": [], "current_path": folder}
+    
+    # Resolve target directory (prevent path traversal)
+    target_dir = OUTPUT_DIR
+    if folder:
+        target_dir = (OUTPUT_DIR / folder).resolve()
+        if not str(target_dir).startswith(str(OUTPUT_DIR)):
+            raise HTTPException(status_code=400, detail="Invalid path")
+    
+    if not target_dir.exists():
+        return {"files": [], "folders": [], "current_path": folder}
+    
+    files = []
+    folders = []
+    
+    for item in target_dir.iterdir():
+        if item.name.startswith('.'):
+            continue
+        
+        if item.is_dir():
+            folders.append({
+                "name": item.name,
+                "path": str(item.relative_to(OUTPUT_DIR))
+            })
+        elif item.is_file():
+            info = get_file_info(item)
+            # Filter by type if specified
+            if file_type and info["type"] != file_type:
+                continue
+            files.append(info)
+    
+    # Sort files
+    if sort_by == "name":
+        files.sort(key=lambda x: x["name"].lower(), reverse=sort_desc)
+    elif sort_by == "size":
+        files.sort(key=lambda x: x["size"], reverse=sort_desc)
+    elif sort_by == "type":
+        files.sort(key=lambda x: x["type"], reverse=sort_desc)
+    else:  # modified
+        files.sort(key=lambda x: x["modified"], reverse=sort_desc)
+    
+    folders.sort(key=lambda x: x["name"].lower())
+    
+    return {
+        "files": files,
+        "folders": folders,
+        "current_path": folder,
+        "parent_path": str(Path(folder).parent) if folder else None
+    }
+
+
+@app.get("/api/outputs/thumbnail/{file_path:path}")
+async def get_thumbnail(
+    file_path: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get or generate thumbnail for a file"""
+    # Resolve and validate path
+    source_path = (OUTPUT_DIR / file_path).resolve()
+    if not str(source_path).startswith(str(OUTPUT_DIR)):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    
+    if not source_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    file_type = get_file_type(source_path.name)
+    
+    # For mesh and other files, return a placeholder icon
+    if file_type in ("mesh", "audio", "other"):
+        # Return a simple SVG placeholder
+        icons = {
+            "mesh": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#374151" width="100" height="100"/><path fill="#9CA3AF" d="M50 15L20 35v30l30 20 30-20V35L50 15zm0 10l20 13v20L50 71 30 58V38l20-13z"/></svg>',
+            "audio": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#374151" width="100" height="100"/><path fill="#9CA3AF" d="M30 35h10v30H30zm15 5h10v20H45zm15-10h10v40H60z"/></svg>',
+            "other": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#374151" width="100" height="100"/><path fill="#9CA3AF" d="M25 15h35l15 15v55H25V15zm30 5v15h15L55 20z"/></svg>'
+        }
+        svg = icons.get(file_type, icons["other"])
+        return StreamingResponse(
+            io.BytesIO(svg.encode()),
+            media_type="image/svg+xml"
+        )
+    
+    ensure_thumbnail_dir()
+    
+    # Generate thumbnail path based on hash of file path + modification time
+    import hashlib
+    stat = source_path.stat()
+    cache_key = f"{file_path}_{stat.st_mtime}_{stat.st_size}"
+    thumb_name = hashlib.md5(cache_key.encode()).hexdigest() + ".jpg"
+    thumb_path = THUMBNAIL_DIR / thumb_name
+    
+    # Generate if not cached
+    if not thumb_path.exists():
+        if file_type == "image":
+            if not generate_image_thumbnail(source_path, thumb_path):
+                raise HTTPException(status_code=500, detail="Failed to generate thumbnail")
+        elif file_type == "video":
+            if not generate_video_thumbnail(source_path, thumb_path):
+                # Return video icon as fallback
+                svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#374151" width="100" height="100"/><polygon fill="#9CA3AF" points="40,25 40,75 75,50"/></svg>'
+                return StreamingResponse(io.BytesIO(svg.encode()), media_type="image/svg+xml")
+    
+    return FileResponse(thumb_path, media_type="image/jpeg")
+
+
+@app.get("/api/outputs/file/{file_path:path}")
+async def get_output_file(
+    file_path: str,
+    current_user: dict = Depends(get_current_user),
+    download: bool = False
+):
+    """Get original output file (for download or streaming)"""
+    # Resolve and validate path
+    source_path = (OUTPUT_DIR / file_path).resolve()
+    if not str(source_path).startswith(str(OUTPUT_DIR)):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    
+    if not source_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Get MIME type
+    mime_type, _ = mimetypes.guess_type(str(source_path))
+    if not mime_type:
+        mime_type = "application/octet-stream"
+    
+    # For download, set content-disposition
+    if download:
+        return FileResponse(
+            source_path,
+            media_type=mime_type,
+            filename=source_path.name
+        )
+    
+    # For streaming (video), return with appropriate headers
+    file_type = get_file_type(source_path.name)
+    if file_type == "video":
+        return FileResponse(
+            source_path,
+            media_type=mime_type,
+            headers={"Accept-Ranges": "bytes"}
+        )
+    
+    return FileResponse(source_path, media_type=mime_type)
+
+
+@app.delete("/api/outputs/file/{file_path:path}")
+async def delete_output_file(
+    file_path: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an output file"""
+    # Resolve and validate path
+    source_path = (OUTPUT_DIR / file_path).resolve()
+    if not str(source_path).startswith(str(OUTPUT_DIR)):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    
+    if not source_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    try:
+        source_path.unlink()
+        await db.add_log(
+            action="output_deleted",
+            user_id=current_user["id"],
+            details=f"Deleted output file: {file_path}"
+        )
+        return {"success": True, "message": f"Deleted {source_path.name}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete: {str(e)}")
 
 
 # ============================================
