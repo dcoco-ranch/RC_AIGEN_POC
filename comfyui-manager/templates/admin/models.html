@@ -248,16 +248,19 @@ function getStatusBadge(status) {
 
 function getProgressClass(status) {
     switch(status) {
-        case 'complete': return 'progress-success';
-        case 'error': return 'progress-error';
-        case 'cancelled': return 'progress-warning';
-        default: return 'progress-primary';
+        case 'complete': return 'bg-gradient-to-r from-emerald-400 to-emerald-500';
+        case 'error': return 'bg-gradient-to-r from-red-400 to-red-500';
+        case 'cancelled': return 'bg-gradient-to-r from-amber-400 to-amber-500';
+        default: return 'bg-gradient-to-r from-rc-blue to-rc-cyan';
     }
 }
 
 function renderDownloadItem(download) {
     const isActive = ['starting', 'downloading'].includes(download.status);
     const speedText = isActive && download.speed ? formatSpeed(download.speed) : '';
+    const progressPercent = Math.min(100, Math.max(0, download.progress || 0));
+    const progressClass = getProgressClass(download.status);
+    
     return `
         <div id="download-${download.id}" class="p-4 rounded-lg border border-base-content/10 bg-base-200/30">
             <div class="flex items-center justify-between mb-2">
@@ -266,12 +269,14 @@ function renderDownloadItem(download) {
                     ${getStatusBadge(download.status)}
                 </div>
                 <div class="flex items-center gap-2">
-                    ${speedText ? `<span class="text-sm text-primary font-medium">${speedText}</span>` : ''}
-                    <span class="text-sm text-base-content/60">${download.progress}%</span>
+                    ${speedText ? `<span class="text-sm text-rc-cyan font-medium">${speedText}</span>` : ''}
+                    <span class="text-sm text-base-content/60">${progressPercent}%</span>
                     ${isActive ? `<button onclick="cancelDownload('${download.id}')" class="btn btn-ghost btn-xs text-error">Cancel</button>` : ''}
                 </div>
             </div>
-            <progress class="progress ${getProgressClass(download.status)} w-full" value="${download.progress}" max="100"></progress>
+            <div class="w-full h-2 bg-base-300 rounded-full overflow-hidden">
+                <div class="h-full ${progressClass} rounded-full transition-all duration-300 ease-out" style="width: ${progressPercent}%"></div>
+            </div>
             <div class="flex justify-between mt-1">
                 <span class="text-xs text-base-content/60">${download.model_type}</span>
                 <span class="text-xs text-base-content/60">${download.total > 0 ? formatBytes(download.downloaded) + ' / ' + formatBytes(download.total) : ''}</span>
