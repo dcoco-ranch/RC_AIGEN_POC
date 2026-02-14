@@ -16,7 +16,7 @@ services:
       - GITLAB_BASE_URL=${GITLAB_BASE_URL:-https://gitlab.com}
       - GITLAB_CLIENT_ID=${GITLAB_CLIENT_ID:-}
       - GITLAB_CLIENT_SECRET=${GITLAB_CLIENT_SECRET:-}
-      - GITLAB_REDIRECT_URI=${GITLAB_REDIRECT_URI:-http://localhost:8730/auth/gitlab/callback}
+      - GITLAB_REDIRECT_URI=${GITLAB_REDIRECT_URI:-http://remote.ranchcomputing.com:51823/auth/gitlab/callback}
       # Admin access control
       - ADMIN_ALLOWED_EMAILS=${ADMIN_ALLOWED_EMAILS:-}
       - ADMIN_ALLOWED_DOMAINS=${ADMIN_ALLOWED_DOMAINS:-}
@@ -36,9 +36,9 @@ services:
     volumes:
       # Docker socket for managing ComfyUI container
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Persistent data
-      - portal-data:/app/data
-      - portal-logs:/app/logs
+      # Persistent data - use local folder to preserve existing database
+      - ./data:/app/data
+      - ./logs:/app/logs
       # Mount compose file for docker compose commands
       - ./docker-compose-comfyui.yml:/app/docker-compose-comfyui.yml:ro
       # Development: Mount UI files for hot-reloading
@@ -57,12 +57,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-
-volumes:
-  portal-data:
-    name: comfyui-portal-data
-  portal-logs:
-    name: comfyui-portal-logs
 
 networks:
   comfyui-network:
