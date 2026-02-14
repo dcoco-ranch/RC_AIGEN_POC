@@ -44,6 +44,8 @@ services:
       # Development: Mount UI files for hot-reloading
       - ./templates:/app/templates
       - ./static:/app/static
+      # Shared storage directory (user outputs, inputs, workflows)
+      - ./storage-user:/app/storage-user
       # Shared models directory (same as ComfyUI container)
       - ./storage-models/models:/app/storage-models/models
     networks:
