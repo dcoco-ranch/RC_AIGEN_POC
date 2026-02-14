@@ -24,6 +24,10 @@
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
                     },
+                    colors: {
+                        'rc-blue': '#2B2D6E',
+                        'rc-cyan': '#00C8F8',
+                    },
                     animation: {
                         'fade-in': 'fadeIn 0.5s ease-out',
                         'slide-up': 'slideUp 0.4s ease-out',
@@ -35,6 +39,18 @@
             },
         }
     </script>
+    
+    <!-- DaisyUI theme override for Ranch Computing brand -->
+    <style>
+        [data-theme="night"] {
+            --p: 240 43% 30%;
+            --pc: 0 0% 100%;
+            --s: 192 100% 49%;
+            --sc: 0 0% 4%;
+            --pf: 240 43% 25%;
+            --sf: 192 100% 44%;
+        }
+    </style>
     
     <!-- Custom Styles -->
     <link rel="stylesheet" href="/static/custom.css">
@@ -60,29 +76,29 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         
-        /* Gradient text */
+        /* Gradient text - Ranch Computing brand colors */
         .gradient-text {
-            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+            background: linear-gradient(135deg, #2B2D6E 0%, #4B4D8E 50%, #00C8F8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         
-        /* Glow effects */
-        .glow-primary { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        /* Glow effects - brand colors */
+        .glow-primary { box-shadow: 0 0 20px rgba(43, 45, 110, 0.4); }
         .glow-success { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
         
-        /* Modern scrollbar */
+        /* Modern scrollbar - brand colors */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.7); }
+        ::-webkit-scrollbar-thumb { background: rgba(43, 45, 110, 0.5); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 200, 248, 0.7); }
 
-        /* Subtle grid background */
+        /* Subtle grid background - brand colors */
         .bg-grid {
             background-image: 
-                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+                linear-gradient(rgba(43, 45, 110, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(43, 45, 110, 0.03) 1px, transparent 1px);
             background-size: 50px 50px;
         }
     </style>
@@ -211,12 +227,8 @@
     <!-- Footer -->
     <footer class="footer footer-center p-8 bg-base-300/50 backdrop-blur text-base-content border-t border-base-content/5">
         <aside class="max-w-md">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                </div>
+            <div class="flex items-center gap-3 mb-3">
+                <img src="/static/logo.svg" alt="Ranch Computing" class="h-8 w-auto">
                 <span class="font-bold gradient-text">ComfyUI Cloud Studio</span>
             </div>
             <p class="text-sm opacity-60">Professional AI image generation in the cloud. Powered by Ranch Computing infrastructure.</p>

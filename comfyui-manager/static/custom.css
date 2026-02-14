@@ -69,27 +69,27 @@
 }
 
 /* ============================================
-   Gradient Text
+   Gradient Text - Ranch Computing Brand
    ============================================ */
 .gradient-text {
-    background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+    background: linear-gradient(135deg, #2B2D6E 0%, #4B4D8E 50%, #00C8F8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .gradient-text-primary {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #2B2D6E 0%, #00C8F8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 /* ============================================
-   Glow Effects
+   Glow Effects - Brand Colors
    ============================================ */
 .glow-primary {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 20px rgba(43, 45, 110, 0.4);
 }
 
 .glow-success {
@@ -112,11 +112,11 @@
 }
 
 .btn-primary {
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 14px rgba(43, 45, 110, 0.35);
 }
 
 .btn-primary:hover {
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+    box-shadow: 0 6px 20px rgba(43, 45, 110, 0.45);
 }
 
 .btn-success {
@@ -153,18 +153,18 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.4);
+    background: rgba(43, 45, 110, 0.4);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.6);
+    background: rgba(0, 200, 248, 0.6);
 }
 
 /* Firefox scrollbar */
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(99, 102, 241, 0.4) rgba(0, 0, 0, 0.1);
+    scrollbar-color: rgba(43, 45, 110, 0.4) rgba(0, 0, 0, 0.1);
 }
 
 /* ============================================
@@ -280,8 +280,8 @@
 .input:focus,
 .select:focus,
 .textarea:focus {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    border-color: rgba(0, 200, 248, 0.5);
+    box-shadow: 0 0 0 3px rgba(43, 45, 110, 0.15);
 }
 
 /* ============================================
@@ -297,13 +297,13 @@
    ============================================ */
 .menu li > a:hover,
 .menu li > button:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(43, 45, 110, 0.1);
 }
 
 .menu li > a.active,
 .menu li > button.active {
-    background: rgba(99, 102, 241, 0.15);
-    color: #818cf8;
+    background: rgba(43, 45, 110, 0.15);
+    color: #00C8F8;
 }
 
 /* ============================================
@@ -329,7 +329,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6, #c084fc);
+    background: linear-gradient(90deg, #2B2D6E, #4B4D8E, #00C8F8);
 }
 
 /* ============================================
@@ -337,13 +337,13 @@
    ============================================ */
 .bg-grid {
     background-image: 
-        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(43, 45, 110, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(43, 45, 110, 0.03) 1px, transparent 1px);
     background-size: 50px 50px;
 }
 
 .bg-dots {
-    background-image: radial-gradient(rgba(99, 102, 241, 0.15) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(43, 45, 110, 0.15) 1px, transparent 1px);
     background-size: 20px 20px;
 }
 
@@ -379,6 +379,6 @@
     }
     
     .gradient-text {
-        -webkit-text-fill-color: #6366f1;
+        -webkit-text-fill-color: #2B2D6E;
     }
 }
