@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}GPU Usage - Admin - ComfyUI Manager{% endblock %}
+
+{% block content %}
+<div class="flex min-h-[calc(100vh-4rem)]">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-base-100 border-r border-base-content/10 p-4 hidden lg:block">
+        <div class="mb-6">
+            <h2 class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-3">Admin Panel</h2>
+        </div>
+        <nav class="space-y-1">
+            <a href="/admin/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Overview
+            </a>
+            <a href="/admin/users" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                Users
+            </a>
+            <a href="/admin/jobs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Jobs
+            </a>
+            <a href="/admin/models" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                Models
+            </a>
+            <a href="/admin/gpu-usage" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                GPU Usage
+            </a>
+            <a href="/admin/logs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Logs
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 lg:p-8 overflow-auto">
+        <!-- Mobile Navigation -->
+        <div class="lg:hidden mb-6">
+            <div class="flex gap-2 overflow-x-auto pb-2">
+                <a href="/admin/dashboard" class="btn btn-ghost btn-sm">Overview</a>
+                <a href="/admin/users" class="btn btn-ghost btn-sm">Users</a>
+                <a href="/admin/jobs" class="btn btn-ghost btn-sm">Jobs</a>
+                <a href="/admin/models" class="btn btn-ghost btn-sm">Models</a>
+                <a href="/admin/gpu-usage" class="btn btn-primary btn-sm">GPU Usage</a>
+                <a href="/admin/logs" class="btn btn-ghost btn-sm">Logs</a>
+            </div>
+        </div>
+
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-base-content">GPU Usage</h1>
+                <p class="text-base-content/60 mt-1">Monitor GPU compute usage and billing</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="days-filter" class="select select-bordered select-sm">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                <button onclick="refreshAllStats()" class="btn btn-primary btn-sm gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Live GPU Status -->
+        <div class="glass-card rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-base-content">Live GPU Status</h2>
+                <span id="live-status-badge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-base-200 text-base-content/60 text-sm font-medium">
+                    <span class="w-2 h-2 rounded-full bg-base-content/40"></span>
+                    Loading...
+                </span>
+            </div>
+            <div id="live-gpu-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="flex items-center justify-center p-8 text-base-content/40">
+                    <span class="loading loading-spinner loading-md mr-2"></span>
+                    Loading...
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage Summary Cards -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="glass-card rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <p id="stat-total-hours" class="text-2xl font-bold text-base-content">--</p>
+                        <p class="text-xs text-base-content/60">Total GPU Hours</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-info/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
+                    <div>
+                        <p id="stat-avg-utilization" class="text-2xl font-bold text-base-content">--%</p>
+                        <p class="text-xs text-base-content/60">Avg GPU Utilization</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    </div>
+                    <div>
+                        <p id="stat-peak-memory" class="text-2xl font-bold text-base-content">-- GB</p>
+                        <p class="text-xs text-base-content/60">Peak Memory</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <p id="stat-total-records" class="text-2xl font-bold text-base-content">--</p>
+                        <p class="text-xs text-base-content/60">Usage Records</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage by User -->
+        <div class="glass-card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4">Usage by User</h2>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="text-base-content/60">
+                            <th>User</th>
+                            <th>GPU Hours</th>
+                            <th>Avg GPU %</th>
+                            <th>Avg Memory %</th>
+                            <th>Peak Memory</th>
+                            <th>Records</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-usage-table">
+                        <tr>
+                            <td colspan="6" class="text-center text-base-content/40 py-8">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Usage Records -->
+        <div class="glass-card rounded-xl p-6">
+            <h2 class="text-lg font-semibold text-base-content mb-4">Recent Usage Records</h2>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="text-base-content/60">
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>GPU</th>
+                            <th>GPU %</th>
+                            <th>Memory</th>
+                            <th>Temp</th>
+                            <th>Power</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-records-table">
+                        <tr>
+                            <td colspan="8" class="text-center text-base-content/40 py-8">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// Live GPU status (similar to dashboard)
+function createLiveGPUCard(gpu) {
+    const memoryPercent = Math.round((gpu.memory_used_mb / gpu.memory_total_mb) * 100);
+    const gpuUtilColor = gpu.gpu_utilization > 80 ? 'text-error' : gpu.gpu_utilization > 50 ? 'text-warning' : 'text-success';
+    const memUtilColor = memoryPercent > 80 ? 'text-error' : memoryPercent > 50 ? 'text-warning' : 'text-success';
+    
+    return `
+        <div class="bg-base-200/50 rounded-xl p-4 border border-base-content/5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-sm">${gpu.name}</p>
+                        <p class="text-xs text-base-content/50">GPU ${gpu.id}</p>
+                    </div>
+                </div>
+                <span class="text-sm font-mono ${gpu.temperature_c > 80 ? 'text-error' : gpu.temperature_c > 60 ? 'text-warning' : 'text-success'}">${gpu.temperature_c}°C</span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 text-center">
+                <div>
+                    <p class="${gpuUtilColor} text-2xl font-bold">${gpu.gpu_utilization}%</p>
+                    <p class="text-xs text-base-content/50">GPU</p>
+                </div>
+                <div>
+                    <p class="${memUtilColor} text-2xl font-bold">${memoryPercent}%</p>
+                    <p class="text-xs text-base-content/50">Memory</p>
+                </div>
+            </div>
+            <div class="mt-3 text-xs text-base-content/50 text-center">
+                ${gpu.memory_used_mb} / ${gpu.memory_total_mb} MB • ${gpu.power_draw_w?.toFixed(0) || '--'} W
+            </div>
+        </div>
+    `;
+}
+
+async function refreshLiveGPU() {
+    const container = document.getElementById('live-gpu-container');
+    const badge = document.getElementById('live-status-badge');
+    
+    try {
+        const response = await fetch('/admin/gpu/live');
+        const data = await response.json();
+        
+        if (data.available && data.gpus?.length > 0) {
+            badge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/20 text-success text-sm font-medium';
+            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>Online';
+            container.innerHTML = data.gpus.map(gpu => createLiveGPUCard(gpu)).join('');
+        } else {
+            badge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-warning/20 text-warning text-sm font-medium';
+            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-warning"></span>Unavailable';
+            container.innerHTML = `<div class="col-span-full text-center py-8 text-base-content/50">GPU not available</div>`;
+        }
+    } catch (e) {
+        badge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-error/20 text-error text-sm font-medium';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-error"></span>Error';
+    }
+}
+
+async function refreshStats() {
+    const days = document.getElementById('days-filter').value;
+    
+    try {
+        const response = await fetch(`/admin/gpu/stats?days=${days}`);
+        const data = await response.json();
+        
+        document.getElementById('stat-total-hours').textContent = data.total_duration_hours || '0';
+        document.getElementById('stat-avg-utilization').textContent = `${data.avg_gpu_utilization || 0}%`;
+        document.getElementById('stat-peak-memory').textContent = data.peak_memory_mb ? `${(data.peak_memory_mb / 1024).toFixed(1)} GB` : '-- GB';
+        document.getElementById('stat-total-records').textContent = data.total_records || '0';
+        
+        // Recent records
+        const tbody = document.getElementById('recent-records-table');
+        if (data.records && data.records.length > 0) {
+            tbody.innerHTML = data.records.slice(0, 50).map(r => `
+                <tr class="hover">
+                    <td class="text-xs">${new Date(r.recorded_at).toLocaleString()}</td>
+                    <td>${r.user_id || '--'}</td>
+                    <td class="text-xs">${r.gpu_name || `GPU ${r.gpu_id}`}</td>
+                    <td><span class="${r.gpu_utilization > 80 ? 'text-error' : r.gpu_utilization > 50 ? 'text-warning' : 'text-success'}">${r.gpu_utilization || '--'}%</span></td>
+                    <td class="text-xs">${r.memory_used_mb || '--'} / ${r.memory_total_mb || '--'} MB</td>
+                    <td>${r.temperature_c || '--'}°C</td>
+                    <td>${r.power_draw_w?.toFixed(0) || '--'} W</td>
+                    <td class="text-xs">${r.duration_seconds ? `${r.duration_seconds.toFixed(1)}s` : '--'}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-base-content/40 py-8">No usage records yet</td></tr>';
+        }
+    } catch (e) {
+        console.error('Failed to fetch stats:', e);
+    }
+}
+
+async function refreshUserUsage() {
+    const days = document.getElementById('days-filter').value;
+    
+    try {
+        const response = await fetch(`/admin/gpu/by-user?days=${days}`);
+        const data = await response.json();
+        
+        const tbody = document.getElementById('user-usage-table');
+        if (data && data.length > 0) {
+            tbody.innerHTML = data.map(u => `
+                <tr class="hover">
+                    <td>${u.user_id || 'System'}</td>
+                    <td class="font-medium">${((u.total_duration || 0) / 3600).toFixed(2)} hrs</td>
+                    <td>${u.avg_gpu_util?.toFixed(1) || '--'}%</td>
+                    <td>${u.avg_mem_util?.toFixed(1) || '--'}%</td>
+                    <td>${u.peak_memory ? `${(u.peak_memory / 1024).toFixed(1)} GB` : '--'}</td>
+                    <td>${u.record_count || 0}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-base-content/40 py-8">No user usage data</td></tr>';
+        }
+    } catch (e) {
+        console.error('Failed to fetch user usage:', e);
+    }
+}
+
+async function refreshAllStats() {
+    await Promise.all([refreshLiveGPU(), refreshStats(), refreshUserUsage()]);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    refreshAllStats();
+    
+    // Auto-refresh live GPU every 5 seconds
+    setInterval(refreshLiveGPU, 5000);
+    
+    // Handle filter change
+    document.getElementById('days-filter').addEventListener('change', refreshAllStats);
+});
+</script>
+{% endblock %}

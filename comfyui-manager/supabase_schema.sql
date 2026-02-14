@@ -150,6 +150,30 @@ GROUP BY DATE(created_at)
 ORDER BY date DESC;
 
 -- =============================================
+-- GPU Usage Table (Monitoring & Billing)
+-- =============================================
+CREATE TABLE IF NOT EXISTS gpu_usage (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    job_id BIGINT REFERENCES jobs(id),
+    gpu_id INTEGER DEFAULT 0,
+    gpu_name TEXT,
+    memory_used_mb INTEGER,
+    memory_total_mb INTEGER,
+    gpu_utilization INTEGER,  -- percentage 0-100
+    memory_utilization INTEGER,  -- percentage 0-100
+    temperature_c INTEGER,
+    power_draw_w REAL,
+    duration_seconds REAL,
+    recorded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for GPU usage
+CREATE INDEX IF NOT EXISTS idx_gpu_usage_user_id ON gpu_usage(user_id);
+CREATE INDEX IF NOT EXISTS idx_gpu_usage_recorded_at ON gpu_usage(recorded_at);
+CREATE INDEX IF NOT EXISTS idx_gpu_usage_job_id ON gpu_usage(job_id);
+
+-- =============================================
 -- Row Level Security (RLS) - Optional
 -- =============================================
 

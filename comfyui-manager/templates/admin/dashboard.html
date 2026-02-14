@@ -26,6 +26,10 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
                 Models
             </a>
+            <a href="/admin/gpu-usage" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                GPU Usage
+            </a>
             <a href="/admin/logs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-base-content/70 hover:bg-base-200 hover:text-base-content transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Logs
@@ -42,6 +46,7 @@
                 <a href="/admin/users" class="btn btn-ghost btn-sm">Users</a>
                 <a href="/admin/jobs" class="btn btn-ghost btn-sm">Jobs</a>
                 <a href="/admin/models" class="btn btn-ghost btn-sm">Models</a>
+                <a href="/admin/gpu-usage" class="btn btn-ghost btn-sm">GPU</a>
                 <a href="/admin/logs" class="btn btn-ghost btn-sm">Logs</a>
             </div>
         </div>
@@ -167,6 +172,56 @@
                     </div>
                 </div>
                 <p class="text-xs text-base-content/40 mt-2">Set the external port that users should use to access ComfyUI (e.g., if exposed via reverse proxy on a different port).</p>
+            </div>
+        </div>
+
+        <!-- GPU Monitoring -->
+        <div class="glass-card rounded-xl p-6 mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-base-content">GPU Monitoring</h2>
+                    <p class="text-sm text-base-content/60">Live GPU usage and statistics</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="btn btn-ghost btn-sm gap-2" onclick="refreshGPUStats()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Refresh
+                    </button>
+                    <span id="gpu-status-badge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-base-200 text-base-content/60 text-sm font-medium">
+                        <span class="w-2 h-2 rounded-full bg-base-content/40"></span>
+                        Loading...
+                    </span>
+                </div>
+            </div>
+            
+            <!-- GPU Cards Container -->
+            <div id="gpu-cards-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <!-- GPU cards will be dynamically inserted here -->
+                <div class="flex items-center justify-center p-8 text-base-content/40">
+                    <span class="loading loading-spinner loading-md mr-2"></span>
+                    Loading GPU stats...
+                </div>
+            </div>
+            
+            <!-- GPU Usage Summary -->
+            <div class="border-t border-base-content/10 pt-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-6 text-sm">
+                        <div>
+                            <span class="text-base-content/60">Last updated:</span>
+                            <span id="gpu-last-update" class="font-medium ml-1">--</span>
+                        </div>
+                        <div>
+                            <span class="text-base-content/60">Auto-refresh:</span>
+                            <label class="swap ml-1">
+                                <input type="checkbox" id="gpu-auto-refresh" checked>
+                                <span class="swap-on text-success font-medium">ON</span>
+                                <span class="swap-off text-base-content/40 font-medium">OFF</span>
+                            </label>
+                        </div>
+                    </div>
+                    <a href="/admin/gpu-usage" class="text-sm text-primary hover:underline">View detailed usage history →</a>
+                </div>
             </div>
         </div>
 
@@ -379,5 +434,144 @@ async function savePublicPort() {
 
 // Auto-refresh status every 30 seconds
 setInterval(refreshComfyUIStatus, 30000);
+
+// ============================================
+// GPU Monitoring Functions
+// ============================================
+
+let gpuRefreshInterval = null;
+
+function createGPUCard(gpu) {
+    const memoryPercent = Math.round((gpu.memory_used_mb / gpu.memory_total_mb) * 100);
+    const gpuUtilColor = gpu.gpu_utilization > 80 ? 'text-error' : gpu.gpu_utilization > 50 ? 'text-warning' : 'text-success';
+    const memUtilColor = memoryPercent > 80 ? 'text-error' : memoryPercent > 50 ? 'text-warning' : 'text-success';
+    const tempColor = gpu.temperature_c > 80 ? 'text-error' : gpu.temperature_c > 60 ? 'text-warning' : 'text-success';
+    
+    return `
+        <div class="bg-base-200/50 rounded-xl p-4 border border-base-content/5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-sm text-base-content">GPU ${gpu.id}</p>
+                        <p class="text-xs text-base-content/50 truncate max-w-[150px]" title="${gpu.name}">${gpu.name}</p>
+                    </div>
+                </div>
+                <span class="${tempColor} text-sm font-mono">${gpu.temperature_c}°C</span>
+            </div>
+            
+            <div class="space-y-3">
+                <!-- GPU Utilization -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-base-content/60">GPU Usage</span>
+                        <span class="${gpuUtilColor} font-medium">${gpu.gpu_utilization}%</span>
+                    </div>
+                    <div class="w-full bg-base-300 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-500" style="width: ${gpu.gpu_utilization}%"></div>
+                    </div>
+                </div>
+                
+                <!-- Memory Usage -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-base-content/60">Memory</span>
+                        <span class="${memUtilColor} font-medium">${gpu.memory_used_mb} / ${gpu.memory_total_mb} MB</span>
+                    </div>
+                    <div class="w-full bg-base-300 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-info to-success h-2 rounded-full transition-all duration-500" style="width: ${memoryPercent}%"></div>
+                    </div>
+                </div>
+                
+                <!-- Power Draw -->
+                ${gpu.power_draw_w !== null ? `
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-base-content/60">Power Draw</span>
+                    <span class="text-base-content/80 font-mono">${gpu.power_draw_w?.toFixed(1) || '--'} W</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+async function refreshGPUStats() {
+    const container = document.getElementById('gpu-cards-container');
+    const badge = document.getElementById('gpu-status-badge');
+    const lastUpdate = document.getElementById('gpu-last-update');
+    
+    try {
+        const response = await fetch('/admin/gpu/live');
+        const data = await response.json();
+        
+        if (data.available && data.gpus && data.gpus.length > 0) {
+            // Update badge
+            badge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/20 text-success text-sm font-medium';
+            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>Available';
+            
+            // Render GPU cards
+            container.innerHTML = data.gpus.map(gpu => createGPUCard(gpu)).join('');
+            
+            // Update timestamp
+            const now = new Date();
+            lastUpdate.textContent = now.toLocaleTimeString();
+        } else {
+            // GPU not available
+            badge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-warning/20 text-warning text-sm font-medium';
+            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-warning"></span>Unavailable';
+            
+            container.innerHTML = `
+                <div class="col-span-full text-center py-8 text-base-content/50">
+                    <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                    </svg>
+                    <p class="font-medium">GPU stats unavailable</p>
+                    <p class="text-sm">${data.error || 'No NVIDIA GPU detected or nvidia-smi not available'}</p>
+                </div>
+            `;
+            
+            lastUpdate.textContent = '--';
+        }
+    } catch (error) {
+        console.error('Failed to fetch GPU stats:', error);
+        badge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-error/20 text-error text-sm font-medium';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-error"></span>Error';
+        
+        container.innerHTML = `
+            <div class="col-span-full text-center py-8 text-error/70">
+                <p class="font-medium">Failed to fetch GPU stats</p>
+                <p class="text-sm">${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+function setupGPUAutoRefresh() {
+    const checkbox = document.getElementById('gpu-auto-refresh');
+    
+    // Initial fetch
+    refreshGPUStats();
+    
+    // Setup auto-refresh (every 5 seconds)
+    gpuRefreshInterval = setInterval(() => {
+        if (checkbox.checked) {
+            refreshGPUStats();
+        }
+    }, 5000);
+    
+    // Handle checkbox change
+    checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            refreshGPUStats();
+        }
+    });
+}
+
+// Initialize GPU monitoring on page load
+document.addEventListener('DOMContentLoaded', setupGPUAutoRefresh);
 </script>
 {% endblock %}

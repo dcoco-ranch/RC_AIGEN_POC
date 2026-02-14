@@ -319,6 +319,23 @@ async def admin_export_logs(
 
 
 # ============================================
+# GPU Usage Page
+# ============================================
+
+@router.get("/gpu-usage", response_class=HTMLResponse)
+async def admin_gpu_usage_page(
+    request: Request,
+    current_user: dict = Depends(get_current_admin)
+):
+    """GPU usage monitoring and history page"""
+    return templates.TemplateResponse("admin/gpu_usage.html", {
+        "request": request,
+        "user": current_user,
+        "messages": []
+    })
+
+
+# ============================================
 # Models Management
 # ============================================
 
@@ -953,3 +970,135 @@ async def update_admin_settings(
         )
     
     return {"success": True, "message": "Settings updated"}
+
+
+# ============================================
+# GPU Monitoring Endpoints
+# ============================================
+
+async def get_live_gpu_stats() -> Dict[str, Any]:
+    """Get live GPU stats from the ComfyUI Docker container using nvidia-smi"""
+    try:
+        # Query nvidia-smi inside the Docker container
+        result = subprocess.run(
+            [
+                "docker", "exec", "comfyui", "nvidia-smi",
+                "--query-gpu=index,name,memory.used,memory.total,utilization.gpu,utilization.memory,temperature.gpu,power.draw",
+                "--format=csv,noheader,nounits"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        if result.returncode != 0:
+            # Try without docker (for local nvidia-smi)
+            result = subprocess.run(
+                [
+                    "nvidia-smi",
+                    "--query-gpu=index,name,memory.used,memory.total,utilization.gpu,utilization.memory,temperature.gpu,power.draw",
+                    "--format=csv,noheader,nounits"
+                ],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+        
+        if result.returncode != 0:
+            return {"available": False, "error": "nvidia-smi not available", "gpus": []}
+        
+        gpus = []
+        for line in result.stdout.strip().split("\n"):
+            if not line.strip():
+                continue
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) >= 8:
+                try:
+                    gpus.append({
+                        "id": int(parts[0]),
+                        "name": parts[1],
+                        "memory_used_mb": int(float(parts[2])),
+                        "memory_total_mb": int(float(parts[3])),
+                        "gpu_utilization": int(float(parts[4])),
+                        "memory_utilization": int(float(parts[5])),
+                        "temperature_c": int(float(parts[6])),
+                        "power_draw_w": float(parts[7]) if parts[7] != "[N/A]" else None
+                    })
+                except (ValueError, IndexError):
+                    continue
+        
+        return {
+            "available": True,
+            "gpus": gpus,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except subprocess.TimeoutExpired:
+        return {"available": False, "error": "Timeout querying GPU stats", "gpus": []}
+    except FileNotFoundError:
+        return {"available": False, "error": "nvidia-smi not found", "gpus": []}
+    except Exception as e:
+        return {"available": False, "error": str(e), "gpus": []}
+
+
+@router.get("/gpu/live")
+async def admin_gpu_live_stats(current_user: dict = Depends(get_current_admin)):
+    """Get live GPU statistics"""
+    return await get_live_gpu_stats()
+
+
+@router.get("/gpu/stats")
+async def admin_gpu_usage_stats(
+    user_id: Optional[int] = None,
+    days: int = 30,
+    current_user: dict = Depends(get_current_admin)
+):
+    """Get GPU usage statistics from database"""
+    return await db.get_gpu_usage_stats(user_id=user_id, days=days)
+
+
+@router.get("/gpu/by-user")
+async def admin_gpu_usage_by_user(
+    days: int = 30,
+    current_user: dict = Depends(get_current_admin)
+):
+    """Get GPU usage aggregated by user"""
+    return await db.get_gpu_usage_by_user(days=days)
+
+
+@router.post("/gpu/log")
+async def admin_log_gpu_usage(
+    request: Request,
+    current_user: dict = Depends(get_current_admin)
+):
+    """Manually log GPU usage (or triggered by job completion)"""
+    data = await request.json()
+    
+    # Get live stats if not provided
+    if not data.get("gpu_stats"):
+        live_stats = await get_live_gpu_stats()
+        if live_stats["available"] and live_stats["gpus"]:
+            gpu = live_stats["gpus"][0]  # Primary GPU
+            data["gpu_id"] = gpu["id"]
+            data["gpu_name"] = gpu["name"]
+            data["memory_used_mb"] = gpu["memory_used_mb"]
+            data["memory_total_mb"] = gpu["memory_total_mb"]
+            data["gpu_utilization"] = gpu["gpu_utilization"]
+            data["memory_utilization"] = gpu["memory_utilization"]
+            data["temperature_c"] = gpu["temperature_c"]
+            data["power_draw_w"] = gpu["power_draw_w"]
+    
+    record_id = await db.log_gpu_usage(
+        user_id=data.get("user_id"),
+        job_id=data.get("job_id"),
+        gpu_id=data.get("gpu_id", 0),
+        gpu_name=data.get("gpu_name"),
+        memory_used_mb=data.get("memory_used_mb"),
+        memory_total_mb=data.get("memory_total_mb"),
+        gpu_utilization=data.get("gpu_utilization"),
+        memory_utilization=data.get("memory_utilization"),
+        temperature_c=data.get("temperature_c"),
+        power_draw_w=data.get("power_draw_w"),
+        duration_seconds=data.get("duration_seconds")
+    )
+    
+    return {"success": True, "id": record_id}

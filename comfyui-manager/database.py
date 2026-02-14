@@ -5,7 +5,7 @@ Handles all database operations for ComfyUI Manager
 
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from contextlib import contextmanager
 from enum import Enum
@@ -169,6 +169,27 @@ def init_sqlite_db():
             )
         """)
         
+        # GPU Usage table (monitoring & billing)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS gpu_usage (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                job_id INTEGER,
+                gpu_id INTEGER DEFAULT 0,
+                gpu_name TEXT,
+                memory_used_mb INTEGER,
+                memory_total_mb INTEGER,
+                gpu_utilization INTEGER,
+                memory_utilization INTEGER,
+                temperature_c INTEGER,
+                power_draw_w REAL,
+                duration_seconds REAL,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (job_id) REFERENCES jobs(id)
+            )
+        """)
+        
         # Insert default settings if not exists
         cursor.execute("""
             INSERT OR IGNORE INTO app_settings (key, value) VALUES ('comfyui_public_port', '8188')
@@ -181,6 +202,9 @@ def init_sqlite_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_external_ref ON payments(external_ref)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gpu_usage_user_id ON gpu_usage(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gpu_usage_recorded_at ON gpu_usage(recorded_at)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gpu_usage_job_id ON gpu_usage(job_id)")
         
         print("✅ SQLite database initialized")
 
@@ -636,6 +660,159 @@ class Database:
                 cursor = conn.cursor()
                 cursor.execute("SELECT key, value FROM app_settings")
                 return {row["key"]: row["value"] for row in cursor.fetchall()}
+    
+    # -------------------- GPU Usage --------------------
+    
+    async def log_gpu_usage(
+        self,
+        user_id: Optional[int] = None,
+        job_id: Optional[int] = None,
+        gpu_id: int = 0,
+        gpu_name: Optional[str] = None,
+        memory_used_mb: Optional[int] = None,
+        memory_total_mb: Optional[int] = None,
+        gpu_utilization: Optional[int] = None,
+        memory_utilization: Optional[int] = None,
+        temperature_c: Optional[int] = None,
+        power_draw_w: Optional[float] = None,
+        duration_seconds: Optional[float] = None
+    ) -> Optional[int]:
+        """Log GPU usage record"""
+        if self.use_supabase:
+            result = supabase.table("gpu_usage").insert({
+                "user_id": user_id,
+                "job_id": job_id,
+                "gpu_id": gpu_id,
+                "gpu_name": gpu_name,
+                "memory_used_mb": memory_used_mb,
+                "memory_total_mb": memory_total_mb,
+                "gpu_utilization": gpu_utilization,
+                "memory_utilization": memory_utilization,
+                "temperature_c": temperature_c,
+                "power_draw_w": power_draw_w,
+                "duration_seconds": duration_seconds
+            }).execute()
+            return result.data[0]["id"] if result.data else None
+        else:
+            with get_sqlite_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """INSERT INTO gpu_usage 
+                       (user_id, job_id, gpu_id, gpu_name, memory_used_mb, memory_total_mb, 
+                        gpu_utilization, memory_utilization, temperature_c, power_draw_w, duration_seconds)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (user_id, job_id, gpu_id, gpu_name, memory_used_mb, memory_total_mb,
+                     gpu_utilization, memory_utilization, temperature_c, power_draw_w, duration_seconds)
+                )
+                return cursor.lastrowid
+    
+    async def get_gpu_usage_stats(self, user_id: Optional[int] = None, days: int = 30) -> Dict[str, Any]:
+        """Get GPU usage statistics, optionally filtered by user"""
+        if self.use_supabase:
+            query = supabase.table("gpu_usage").select("*")
+            if user_id:
+                query = query.eq("user_id", user_id)
+            result = query.gte("recorded_at", (datetime.utcnow() - timedelta(days=days)).isoformat()).execute()
+            records = result.data
+        else:
+            with get_sqlite_connection() as conn:
+                cursor = conn.cursor()
+                date_threshold = (datetime.utcnow() - timedelta(days=days)).isoformat()
+                if user_id:
+                    cursor.execute(
+                        "SELECT * FROM gpu_usage WHERE user_id = ? AND recorded_at >= ? ORDER BY recorded_at DESC",
+                        (user_id, date_threshold)
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT * FROM gpu_usage WHERE recorded_at >= ? ORDER BY recorded_at DESC",
+                        (date_threshold,)
+                    )
+                records = [dict(row) for row in cursor.fetchall()]
+        
+        # Calculate statistics
+        if not records:
+            return {
+                "total_records": 0,
+                "total_duration_seconds": 0,
+                "avg_gpu_utilization": 0,
+                "avg_memory_utilization": 0,
+                "peak_memory_mb": 0,
+                "avg_power_draw_w": 0,
+                "records": []
+            }
+        
+        total_duration = sum(r.get("duration_seconds") or 0 for r in records)
+        gpu_utils = [r.get("gpu_utilization") for r in records if r.get("gpu_utilization") is not None]
+        mem_utils = [r.get("memory_utilization") for r in records if r.get("memory_utilization") is not None]
+        mem_used = [r.get("memory_used_mb") for r in records if r.get("memory_used_mb") is not None]
+        power = [r.get("power_draw_w") for r in records if r.get("power_draw_w") is not None]
+        
+        return {
+            "total_records": len(records),
+            "total_duration_seconds": total_duration,
+            "total_duration_hours": round(total_duration / 3600, 2),
+            "avg_gpu_utilization": round(sum(gpu_utils) / len(gpu_utils), 1) if gpu_utils else 0,
+            "avg_memory_utilization": round(sum(mem_utils) / len(mem_utils), 1) if mem_utils else 0,
+            "peak_memory_mb": max(mem_used) if mem_used else 0,
+            "avg_power_draw_w": round(sum(power) / len(power), 1) if power else 0,
+            "records": records[:100]  # Return last 100 records
+        }
+    
+    async def get_gpu_usage_by_user(self, days: int = 30) -> List[Dict[str, Any]]:
+        """Get GPU usage aggregated by user"""
+        if self.use_supabase:
+            # Supabase doesn't support GROUP BY easily, fetch all and aggregate in Python
+            result = supabase.table("gpu_usage").select("*").gte(
+                "recorded_at", (datetime.utcnow() - timedelta(days=days)).isoformat()
+            ).execute()
+            records = result.data
+        else:
+            with get_sqlite_connection() as conn:
+                cursor = conn.cursor()
+                date_threshold = (datetime.utcnow() - timedelta(days=days)).isoformat()
+                cursor.execute(
+                    """SELECT user_id, 
+                              COUNT(*) as record_count,
+                              SUM(duration_seconds) as total_duration,
+                              AVG(gpu_utilization) as avg_gpu_util,
+                              AVG(memory_utilization) as avg_mem_util,
+                              MAX(memory_used_mb) as peak_memory
+                       FROM gpu_usage 
+                       WHERE recorded_at >= ?
+                       GROUP BY user_id
+                       ORDER BY total_duration DESC""",
+                    (date_threshold,)
+                )
+                return [dict(row) for row in cursor.fetchall()]
+        
+        # Aggregate in Python for Supabase
+        from collections import defaultdict
+        user_stats = defaultdict(lambda: {
+            "record_count": 0, "total_duration": 0, "gpu_utils": [], "mem_utils": [], "peak_memory": 0
+        })
+        for r in records:
+            uid = r.get("user_id")
+            user_stats[uid]["record_count"] += 1
+            user_stats[uid]["total_duration"] += r.get("duration_seconds") or 0
+            if r.get("gpu_utilization") is not None:
+                user_stats[uid]["gpu_utils"].append(r["gpu_utilization"])
+            if r.get("memory_utilization") is not None:
+                user_stats[uid]["mem_utils"].append(r["memory_utilization"])
+            if r.get("memory_used_mb") and r["memory_used_mb"] > user_stats[uid]["peak_memory"]:
+                user_stats[uid]["peak_memory"] = r["memory_used_mb"]
+        
+        result = []
+        for uid, stats in user_stats.items():
+            result.append({
+                "user_id": uid,
+                "record_count": stats["record_count"],
+                "total_duration": stats["total_duration"],
+                "avg_gpu_util": round(sum(stats["gpu_utils"]) / len(stats["gpu_utils"]), 1) if stats["gpu_utils"] else 0,
+                "avg_mem_util": round(sum(stats["mem_utils"]) / len(stats["mem_utils"]), 1) if stats["mem_utils"] else 0,
+                "peak_memory": stats["peak_memory"]
+            })
+        return sorted(result, key=lambda x: x["total_duration"], reverse=True)
 
 
 # ============================================
